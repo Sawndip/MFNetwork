@@ -4,16 +4,23 @@
 #include "newcv.h"
 #include "shotnoise.h"
 
+/*
+ #define JEE 0.1
+ #define JEI 0.4
+ #define JIE 0.2
+ #define JII 0.8
+ #define sigma 5. 
+ */
 #define c_ee 1000 //4000 /* connectivity: each neuron receives X incoming connections */
 #define c_ie 1000 //4000 
 #define c_ei 250 //1000 
 #define c_ii 250 //1000
-#define w_ie 0.1e-3 //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
-#define w_ei 0.6e-3 //0.4e-3 //0.6e-3  
-#define w_ii 0.6e-3 //0.8e-3 //0.6e-3 
+#define w_ie 0.2e-3 //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
+#define w_ei 0.4e-3 //0.4e-3 //0.6e-3  
+#define w_ii 0.8e-3 //0.8e-3 //0.6e-3 
 #define w_min 0.0
-#define w_len 1.0e-3
-#define rho_init 0.1
+#define w_len 0.8e-3 //1.0e-3
+#define rho_init 1 //0.1
 #define cpre 0.56
 #define cpost 1.24
 #define tau_e 0.01 /* excitatory population time constant (seconds) */
@@ -22,7 +29,7 @@
 #define tau_mi 0.01 //0.01 /* inhibitory membrane time constant (seconds) */
 #define theta 0.02 /* threshold potential */
 #define v_r 0.01 //0. /* reset potential */
-#define sigma 0.5e-3 //5.e-3 //0.5e-3 /* noise */
+#define sigma 5.e-3 //0.5e-3 //5.e-3 //0.5e-3 /* noise */
 #define tmax 2.1 //10. /* seconds */
 #define dt 0.0001
 #define dwt 0.1
@@ -60,7 +67,7 @@ int main(void) {
 	printf("Inputs: mu_e: %g, mu_i: %g. Equivalent to: nu_ext_e: %gHz, nu_ext_i: %gHz\n", mu_e, mu_i, (mu_e/(c_ee * w_ee[0] * tau_me)), (mu_i/(c_ie * w_ie * tau_me)));
 	printf("time: 0.00, nu_e[0]: %f, nu_i[0]: %f, w_ee[0]: %g\n", nu_e[it], nu_i[it], w_ee[it]);
 	
-	fprintf(output_file, "%f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it]);
+	fprintf(output_file, "%f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
 	for(it = 1; it < NintT; it++){
 		float phi_mu_e, phi_mu_i;
 		float x_local, y_local;
@@ -97,7 +104,7 @@ int main(void) {
 		}
 		
 		printf("time: %g, nu_e[%d]: %g, nu_i[%d]: %g, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, w_ee[it]);
-		fprintf(output_file, "%f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it]);
+		fprintf(output_file, "%f %f %f %g %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
 	}
 	
 	fprintf(output_file, "\n\n\n\n\n");
