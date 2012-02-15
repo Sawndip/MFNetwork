@@ -17,16 +17,54 @@
 #define fup 0.5
 #define cmich 5.41
 #define cmin ((cpre<cpost)?cpre:cpost)
+#define cother ((cpre<cpost)?cpost:cpre)
+#define cimin (((2*cmin)<cother)?(2*cmin):cother)
+#define c2min (cmin + 0.5*(cimin - cmin))
 #define cmax 10.
 #define dc 0.01
 #define Nintc (int)(cmax/dc)
 #define icpre (int)(cpre/dc)
 #define icpost (int)(cpost/dc)
 #define icmin (int)(cmin/dc)
+#define ic2min (int)(c2min/dc)
+
+#define LARGE_NO 20
 
 float Pfirst(float c, float r) {
 	//printf("Pfirst: %f ", pow(c,2.*r*tauca-1.) );
   return(pow(c,2.*r*tauca-1.));
+}
+
+float HyperFunc21(float a, float b, float c, float z){
+	long double s;
+	long double al = 1., bl = 1., cl = 1.;
+	int i = 1;
+	unsigned long int nl = 1;
+	
+	s = 1.; // n=0
+	for(int n = 1; n < LARGE_NO; n++){
+		for(; i < (n+1); i++){ //TODO: check that i incremented even when i<(n+1) fails
+			al *= (a + i - 1);
+			bl *= (b + i - 1);
+			cl *= (c + i - 1);
+		}
+		
+		nl *= n; // running computation of factorial(n)
+		s += ((al * bl) / cl) * (pow(z, n) / nl);
+	}
+	
+	printf("s: %f, ", (float)s);
+	return (float)s;
+}
+
+float Psecond(float c, float r, float cpre, float cpost){
+	float a, b, d;
+	
+	a = pow(c, 2.*r*tauca-1.);
+	b = pow((c-cmin), (2.*r*tauca)); //pow((c-cmin), (2.*r*tauca-1));
+	d = HyperFunc21(2*r*tauca, 2*r*tauca, 2*r*tauca+1, 1-c);
+	
+	return (a * (1 - b * d));
 }
 
 float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post){
@@ -69,38 +107,51 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
     else 
 		alphap = 0.;
 	
+	printf("cmin: %f, cimin: %f, c2min: %f\n", cmin, cimin, c2min);
     /*printf("%f\n",cmin);*/
     for(ic=1;ic<icmin+1;ic++) {
       c = ic*dc;
       P[ic] = Pfirst(c,r);
+	  printf("P1[%d]: %f, \n", ic, P[ic]);
     }
 	
-    for(ic=icmin+1;ic<Nintc;ic++) {
+	// Hypergeometric based solution to second interval
+	for(ic =icmin+1; ic < ic2min+1; ic++){
+		c = ic*dc;
+		P[ic] = Psecond(c, r, cpre, cpost);
+		printf("P2[%d]: %f, \n", ic, P[ic]);
+	}
+	  
+    for(ic=ic2min+1;ic<Nintc;ic++) {
       c = ic*dc;
 	  if(ic<icpre+1){ 
 		  pcmcpre=0.;
 	  }
       else if(ic==icpre+1){
+		  printf("ic==icpre+1\n");
 		  pcmcpre=0.5*pow(dc/cpre,2*r*tauca)/(r*tauca);
 	  }
       else{
 		  pcmcpre=0.5*dc*( P[(int)((c-cpre)/dc)]/pow(c,2.*r*tauca) + P[(int)((c-cpre)/dc)-1]/pow(c-dc,2.*r*tauca) );
+		  printf("pcmcpre: %f, ", pcmcpre);
       }
 		
 	  if(ic<icpost+1){ 
 		  pcmcpost=0.;
 	  }
       else if(ic==icpost+1){
+		  printf("ic==icpost+1\n");
 		  pcmcpost=0.5*pow(dc/cpost,2*r*tauca)/(r*tauca);
+		  printf("pcmcpost: %f, ", pcmcpost);
 	  }
       else{
 		  pcmcpost=0.5*dc*( P[(int)((c-cpost)/dc)]/pow(c,2.*r*tauca) + P[(int)((c-cpost)/dc)-1]/pow(c-dc,2.*r*tauca) );
 	  }
-		
+		printf("firstpart: %f, ", pow(c,2*r*tauca-1)*(P[ic-1]/pow(c-dc,2*r*tauca-1) ));	
 	  P[ic] = pow(c,2*r*tauca-1)*(P[ic-1]/pow(c-dc,2*r*tauca-1)-r*tauca*(pcmcpre+pcmcpost));
 	  if(P[ic] < 0){
-		  //printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
-		  P[ic] = 0.;
+		  printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
+		  //P[ic] = 0.;
 	  }
 	  //printf("P[%d]: %f ", ic, P[ic]);
 	  //printf("comp: %f ", (r*tauca*(pcmcpre+pcmcpost)) );
@@ -116,6 +167,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		  //printf(" alphap: %f\n", alphap);
 	  }
 	  //printf("Alphap: %f\n", alphap);
+	  printf("P3[%d]: %f, \n", ic, P[ic]);
     }
 	
 	//printf("1)alphap: %f, ", alphap);
@@ -168,22 +220,22 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-//int main(void){
-//	float rho = 0.5;
-//	float stepsize = 0.01;
-//	float rate = 0.1;
-//	float c_pre = 1.24;
-//	float c_post = 0.56;
-//	float alphas[2];
-//	
-//	for(int i = 1; i < 200; i+=5){
-//		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
-//		//printf("i: %d, rho: %f\n", i, rho);
-//		
-//		rate = (float) i;
-//		getAlphas(rate, c_pre, c_post, alphas);
-//		printf("i: %d, alphas[0]: %f, alphas[1]: %f\n", i, alphas[0], alphas[1]);
-//	}
-//	
-//	return 0;
-//}
+int main(void){
+	float rho = 0.5;
+	float stepsize = 0.01;
+	float rate = 1;
+	float c_pre = 0.56;
+	float c_post = 1.24;
+	float alphas[2];
+	
+	for(int i = 1; i < 2; i+=5){
+		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
+		//printf("i: %d, rho: %f\n", i, rho);
+		
+		rate = (float) i;
+		getAlphas(rate, c_pre, c_post, alphas);
+		printf("i: %d, alphas[0]: %f, alphas[1]: %f\n", i, alphas[0], alphas[1]);
+	}
+	
+	return 0;
+}
