@@ -17,8 +17,8 @@
 #define fup 0.5
 #define cmich 5.41
 #define cmin ((cpre<cpost)?cpre:cpost)
-#define cmax 30. /* cmax=30 and dc=0.001 make the computations somewhat safe up to r=100Hz */
-#define dc 0.001
+#define cmax 10.
+#define dc 0.01
 #define Nintc (int)(cmax/dc)
 #define icpre (int)(cpre/dc)
 #define icpost (int)(cpost/dc)
@@ -51,13 +51,9 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	
   float cpre = c_pre;
   float cpost = c_post;
-	float interP;
-	FILE *fp;
-	fp = fopen("output1.dat", "w");
   //for(r=1.;r<50.5;r+=1.) {
   if (rate > 0){ /* rate should always be > 0 */
 	r = rate;
-	P[0] = 0.; // avoids problems caused by numerical errors in ((int)((c-cmin)/dc)-1)
     P[(int)(cmin/dc)] = Pfirst(cmin,r);
 	intP = 0.;
     intP = pow(cmin,2.*r*tauca)/(2.*r*tauca);
@@ -77,12 +73,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
     for(ic=1;ic<icmin+1;ic++) {
       c = ic*dc;
       P[ic] = Pfirst(c,r);
-	  if(( ic % (1) ) == 0){
-		  //printf("P1[%d]: %f, \n", ic, P[ic]);
-	  }
-	  fprintf(fp, "%f %f\n", c, P[ic]);
     }
-	//printf("P[%d]: %f, intP(%d): %f\n", icmin, P[icmin], icmin, intP);
 	
     for(ic=icmin+1;ic<Nintc;ic++) {
       c = ic*dc;
@@ -90,45 +81,30 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		  pcmcpre=0.;
 	  }
       else if(ic==icpre+1){
-		  //printf("ic==icpre+1\n");
 		  pcmcpre=0.5*pow(dc/cpre,2*r*tauca)/(r*tauca);
-		  //printf("pcmcpre: %f, ", pcmcpre);
 	  }
       else{
 		  pcmcpre=0.5*dc*( P[(int)((c-cpre)/dc)]/pow(c,2.*r*tauca) + P[(int)((c-cpre)/dc)-1]/pow(c-dc,2.*r*tauca) );
-		  /*if(ic % 58 ==0){
-			  printf("pcmcpre: %f, c: %f, cpre: %f, (c-cpre): %f, (c-cpre)/dc: %d, P[0]: %f\n", pcmcpre, c, cpre, (c-cpre), (int)((c-cpre)/dc), P[0]);
-		  }*/
       }
 		
 	  if(ic<icpost+1){ 
 		  pcmcpost=0.;
 	  }
       else if(ic==icpost+1){
-		  //printf("ic==icpost+1\n");
 		  pcmcpost=0.5*pow(dc/cpost,2*r*tauca)/(r*tauca);
-		  //printf("pcmcpost: %f, ", pcmcpost);
 	  }
       else{
 		  pcmcpost=0.5*dc*( P[(int)((c-cpost)/dc)]/pow(c,2.*r*tauca) + P[(int)((c-cpost)/dc)-1]/pow(c-dc,2.*r*tauca) );
-		  //printf("pcmcpost: %f, ", pcmcpost);
 	  }
 		
 	  P[ic] = pow(c,2*r*tauca-1)*(P[ic-1]/pow(c-dc,2*r*tauca-1)-r*tauca*(pcmcpre+pcmcpost));
 	  if(P[ic] < 0){
-		  /*if(( ic % (1) ) == 0){
-			  printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
-		  }*/
+		  //printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
 		  P[ic] = 0.;
 	  }
-	  fprintf(fp, "%f %f\n", c, P[ic]);
 	  //printf("P[%d]: %f ", ic, P[ic]);
 	  //printf("comp: %f ", (r*tauca*(pcmcpre+pcmcpost)) );
       intP += 0.5*dc*(P[ic-1] + P[ic]);
-	  if(ic == 172){
-		  //printf("----> intP[17200]: %f, \n", intP);
-		  interP = intP;
-	  }
 	  //printf("intP: %f\n", intP);
       /*printf("%f %f %f %f %f\n",c,pcmcpre,pcmcpost,P[ic],intP);*/
 	  if(c > thetad){ 
@@ -140,9 +116,6 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		  //printf(" alphap: %f\n", alphap);
 	  }
 	  //printf("Alphap: %f\n", alphap);
-	  if(( ic % (1) ) == 0){
-		  //printf("P2[%d]: %f, \n", ic, P[ic]);
-	  }
     }
 	
 	//printf("1)alphap: %f, ", alphap);
@@ -150,11 +123,9 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		printf("Error: intP==0, you need to increase cmax\n");
 	}
 	else{
-		//printf("intP: %f, ", intP);
+		printf("intP: %f, ", intP);
 		alphad /= intP;
 		alphap /= intP;
-		interP /= intP;
-		//printf("alphap: %f, alphad: %f, interP: %f\n", alphap, alphad, interP);
 	}
 	//printf("2)alphap: %f, ", alphap);
     Gammad = gammad * alphad;
@@ -166,7 +137,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
      printf("\n");*/
     /*printf("%f %f %f %f\n",r,alphad,alphap,Gammap/(Gammad+Gammap));*/
 	if ((Gammad == 0) && (Gammap == 0)){
-		printf("Gammap and Gammad == 0, alphap: %.10f, alphad: %f, intP(%d): %f\n", alphap, alphad, ic, intP);
+		printf("Gammap and Gammad == 0\n");
 	}
 	else{
 		rhobar = Gammap / (Gammad + Gammap);
@@ -178,7 +149,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		printf("rate: %f, alphad: %f, alphap: %f, rhobar: %f, UP:%f,  DOWN:%f, synchange:%f\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
     }
 	//}
-	if (alphad < 0){ //This case should no longer occur! (when modification for P(I)<0 is enabled above)
+	if (alphad < 0){ //This case should no longer occur!
 		//alphad = 0.;
 		printf("changing alphad\n");
 	}
@@ -188,8 +159,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	}
 	alphas[0] = alphad;
 	alphas[1] = alphap;
-	//printf("P[%d]: %f, alphas[0]: %f, alphas[1]: %f, interP: %f\n", (ic-1), P[ic-1], alphas[0], alphas[1], interP);
-	fclose(fp);
+	printf("P[%d]: %f, alphas[0]: %f, alphas[1]: %f\n", (ic-1), P[ic-1], alphas[0], alphas[1]);
   }
   else{ // Rate == 0, no activity, set alphas to 0
 	printf("Rate == 0, manually setting alphas to 0.\n");
@@ -198,24 +168,22 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-int main(void){
-	float rho = 0.5;
-	float stepsize = 0.01;
-	float rate = 0.1;
-	float c_pre = 0.56;
-	float c_post = 1.24;
-	float alphas[2];
-	
-	for(int i = .1; i < 1; i+=10){
-		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
-		//printf("i: %d, rho: %f\n", i, rho);
-		
-		//rate = (float) i;
-		getAlphas(rate, c_pre, c_post, alphas);
-		printf("i: %d, alphas[0]: %f, alphas[1]: %f\n\n", i, alphas[0], alphas[1]);
-	}
-	
-	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
-	
-	return 0;
-}
+//int main(void){
+//	float rho = 0.5;
+//	float stepsize = 0.01;
+//	float rate = 0.1;
+//	float c_pre = 1.24;
+//	float c_post = 0.56;
+//	float alphas[2];
+//	
+//	for(int i = 1; i < 200; i+=5){
+//		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
+//		//printf("i: %d, rho: %f\n", i, rho);
+//		
+//		rate = (float) i;
+//		getAlphas(rate, c_pre, c_post, alphas);
+//		printf("i: %d, alphas[0]: %f, alphas[1]: %f\n", i, alphas[0], alphas[1]);
+//	}
+//	
+//	return 0;
+//}
