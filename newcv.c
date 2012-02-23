@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 
+#define EPSILLON 0.000001
 #define SQPI sqrt(4.*atan(1.))  /*square root of PI*/
 #define TWOPI 8.*atan(1.)  /* two times PI */
 #define a1  -1.26551223
@@ -46,7 +47,7 @@ x=(threshold-mu)/sigma, y=(reset-mu)/sigma */
   }
   else if(y<-100.) {
     ylow=-100.; 
-    N=(int)(100.*(x-ylow));
+    N=(int)(100.*(x-ylow) + EPSILLON); /* add epsillon to avoid numerical errors in cast */
     for(i=0;i<=N;i++) {
       z=ylow+(x-ylow)*(double)(i)/(double)(N);
       cont=nerf(z);
