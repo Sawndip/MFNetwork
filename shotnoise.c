@@ -38,7 +38,8 @@ float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float
 	
 	d_rho = ((gammap * alphas[1]) - rho_old * (gammap * alphas[1] + gammad * alphas[0])) / tau;
 	rho_new = rho_old + (stepsize * d_rho);
-	printf("rho_old: %f, d_rho: %f, rho_new: %f\n", rho_old, d_rho, rho_new);
+	printf("rho_old: %g, d_rho: %g, rho_new: %g\n", rho_old, d_rho, rho_new);
+	printf("alphad: %g, alphap: %g\n", alphas[0], alphas[1]);
 	return rho_new;
 }
 
@@ -54,7 +55,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   float cpost = c_post;
 	float interP;
 	FILE *fp;
-	fp = fopen("output1.dat", "w");
+	fp = fopen("shot_output.dat", "w");
   //for(r=1.;r<50.5;r+=1.) {
   if (rate > 0){ /* rate should always be > 0 */
 	r = rate;
@@ -190,6 +191,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	alphas[0] = alphad;
 	alphas[1] = alphap;
 	//printf("P[%d]: %f, alphas[0]: %f, alphas[1]: %f, interP: %f\n", (ic-1), P[ic-1], alphas[0], alphas[1], interP);
+	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
   }
   else{ // Rate == 0, no activity, set alphas to 0
