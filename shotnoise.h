@@ -10,6 +10,8 @@
 #ifndef SHOTNOISE_H
 #define SHOTNOISE_H
 
+#include <string.h>
+
 void getAlphas(float rate, float c_pre, float c_post, float *alphas); /* calculates alphas[1]=alphap and alphas[0]=alphad */
 
 float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post); /* returns a new value for rho */

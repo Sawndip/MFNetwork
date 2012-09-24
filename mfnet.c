@@ -106,7 +106,7 @@ int main(void) {
 				printf("time: %g, nu_e[%d]: %g, nu_i[%d]: %g, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, w_ee[it]);
 				fprintf(output_file, "%f %f %f %g %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
 				
-				/*convergence = fmax(fabs(d_nu_e), fabs(d_nu_i));
+				convergence = fmax(fabs(d_nu_e), fabs(d_nu_i));
 				if(convergence < 0.5){
 					printf("convergence at %f, it: %d\n", convergence, it);
 					nu_e[((mt+1)*mfNintT)] = nu_e[it];
@@ -114,7 +114,7 @@ int main(void) {
 					w_ee[((mt+1)*mfNintT)-1] = w_ee[it-1];
 					it = ((mt+1)*mfNintT);
 					nt = mfNintT;
-				}*/
+				}
 			}
 		}
 		

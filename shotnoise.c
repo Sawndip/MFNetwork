@@ -4,7 +4,7 @@
 #include "shotnoise.h"
 
 #define EPSILLON 0.00001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
-#define tauca 0.0227
+#define tauca 0.023 /*0.0227*/
 //#define cpre 0.56 /* moved to local variables to allow changing via function argument */
 //#define cpost 1.24
 #define thetad 1
@@ -12,9 +12,9 @@
 #define gammad 332.
 #define gammap 725.
 #define sigma 3.35
-#define tau 346.
+#define tau 346.361 /* 346 */
 #define rhostar 0.5
-#define D 0.0046
+//#define D 0.0046 /* unused */
 #define fup 0.5
 #define cmich 5.41
 #define cmin ((cpre<cpost)?cpre:cpost)
@@ -24,6 +24,8 @@
 #define icpre (int)(cpre/dc)
 #define icpost (int)(cpost/dc)
 #define icmin (int)(cmin/dc)
+
+char filename[100];
 
 float Pfirst(float c, float r) {
 	//printf("Pfirst: %f ", pow(c,2.*r*tauca-1.) );
@@ -56,6 +58,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	float interP;
 	FILE *fp;
 	fp = fopen("shot_output.dat", "w");
+	//fp = fopen(filename, "w");
   //for(r=1.;r<50.5;r+=1.) {
   if (rate > 0){ /* rate should always be > 0 */
 	r = rate;
@@ -201,24 +204,36 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-//int main(void){
-//	float rho = 0.5;
-//	float stepsize = 0.01;
-//	float rate = 0.1;
-//	float c_pre = 0.56;
-//	float c_post = 1.24;
-//	float alphas[2];
-//	
-//	for(int i = .1; i < 1; i+=10){
-//		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
-//		//printf("i: %d, rho: %f\n", i, rho);
-//		
-//		//rate = (float) i;
-//		getAlphas(rate, c_pre, c_post, alphas);
-//		printf("i: %d, alphas[0]: %f, alphas[1]: %f\n\n", i, alphas[0], alphas[1]);
-//	}
-//	
-//	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
-//	
-//	return 0;
-//}
+int main(void){
+	//float rho = 0.5;
+	//float stepsize = 0.01;
+	float rate = 0.01;
+	float c_pre = 0.56;
+	float c_post = 1.24;
+	float alphas[2];
+	
+	float rhobar;
+	
+	FILE* fp;	
+	strcpy(filename, "fine_rate_dep_alphas.dat");
+	fp = fopen(filename, "a");
+	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
+	for(float i = 0.; i < 0.5; i+=.001){
+		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
+		//printf("i: %d, rho: %f\n", i, rho);
+		
+		rate = (float) i;
+		//sprintf(filename, "shot_out_rate_%f.dat", rate);
+		printf("outfile: %s\n", filename);
+		getAlphas(rate, c_pre, c_post, alphas);
+		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		printf("i: %f, alphas[0]: %f, alphas[1]: %f\n\n", i, alphas[0], alphas[1]);
+		fprintf(fp, "%f %f %f %f %f, %f, %f, %f\n", i, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
+	}
+	fprintf(fp, "\n\n\n\n\n");
+	fclose(fp);
+	
+	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
+	
+	return 0;
+}
