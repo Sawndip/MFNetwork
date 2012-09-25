@@ -204,7 +204,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-int main(void){
+/*int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
 	float rate = 0.01;
@@ -236,4 +236,5 @@ int main(void){
 	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}
+}*/
+

@@ -11,26 +11,34 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee 1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie 1000 //4000 
-#define c_ei 250 //1000 
-#define c_ii 250 //1000
+#define c_ee 400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie 400 //1000 //4000 
+#define c_ei 100 //250 //1000 
+#define c_ii 100 //250 //1000
+
 #define w_ie 0.2e-3 //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
 #define w_ei 0.4e-3 //0.4e-3 //0.6e-3  
 #define w_ii 0.8e-3 //0.8e-3 //0.6e-3 
 #define w_min 0.0
-#define w_len 0.1e-3 //1.0e-3
-#define rho_init 1. //0.1
+#define w_len 0.2e-3 //0.1e-3 //1.0e-3
+#define RHO_INIT 0.5 //1.
+
+#define J_EXT (0.01)
+#define NU_E_INIT (1.25)
+#define NU_I_INIT (1.25)
+
 #define cpre 0.56
 #define cpost 1.24
+
 #define tau_e 0.01 /* excitatory population time constant (seconds) */
 #define tau_i 0.01 //0.01 /* inhibitory population time constant (seconds) */
 #define tau_me 0.02 /* excitatory membrane time constant (seconds) */
 #define tau_mi 0.01 //0.01 /* inhibitory membrane time constant (seconds) */
-#define theta 0.02 /* threshold potential */
-#define v_r 0.01 //0. /* reset potential */
+#define theta 0.016 //0.02 //0.016 //0.02 /* threshold potential */
+#define v_r 0.002 //0.01 //0.02 //0.01 //0. /* reset potential */
 #define sigma 5.e-3 //0.5e-3 //5.e-3 //0.5e-3 /* noise */
-#define tmax 0.2 //3.1002 //10. /* seconds */
+
+#define tmax 300.0 //0.1 //3.1002 //10. /* seconds */
 #define dt 0.0001
 #define dwt 0.100
 #define NintT ((int)(tmax/dt))
@@ -50,13 +58,13 @@ int main(void) {
 	int it, jt;
 	int mt, nt;
 	
-	rho[0] = rho_init;
+	rho[0] = RHO_INIT;
 	w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
-	nu_e[0] = 1.25; //5.25; /* excitatory population initial rate */
-	nu_i[0] = 1.25; //5.25; /* inhibitory population initial rate */
+	nu_e[0] = NU_E_INIT; //5.25; /* excitatory population initial rate */
+	nu_i[0] = NU_I_INIT; //5.25; /* inhibitory population initial rate */
 	
-	mu_e = 0.025; //0.02; //0.025; /* external input to excitatory population */
-	mu_i = 0.025; //0.02; //0.025; /* external input to inhibitory population */
+	mu_e = J_EXT; //0.02; //0.025; /* external input to excitatory population */
+	mu_i = J_EXT; //0.02; //0.025; /* external input to inhibitory population */
 	
 	if(! (output_file = fopen("output_MF.dat", "a")) ){
 		perror("output_MF.dat, error opening output file.");
