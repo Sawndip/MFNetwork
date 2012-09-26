@@ -17,7 +17,7 @@
 
 /***** Time constants ****/
 //#define taui 20.e-3       /*** membrane time constant in seconds ***/ /* now passed in as parameter */
-#define taurp 2.e-3 //5.e-3       /*** absolute refractory period in seconds ***/
+#define taurp 20.e-3 //2.e-3 //5.e-3       /*** absolute refractory period in seconds ***/
 
 float nerf(float z)           /* function exp(z^2)(erf(z)+1)  */
 {
