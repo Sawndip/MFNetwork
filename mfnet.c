@@ -23,6 +23,8 @@
 #define w_len 0.2e-3 //0.1e-3 //1.0e-3
 #define RHO_INIT 0.38 //1.
 
+#define RHO_FIXED 0.5
+
 #define J_EXT (0.01)
 #define NU_E_INIT (1.25)
 #define NU_I_INIT (1.25)
@@ -60,7 +62,9 @@ int main(void) {
 	int mt, nt;
 	
 	rho[0] = RHO_INIT;
-	w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
+	//TODO: reenable weight update
+	//w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
+	w_ee[0] = w_min + (w_len * RHO_FIXED);
 	nu_e[0] = NU_E_INIT; //5.25; /* excitatory population initial rate */
 	nu_i[0] = NU_I_INIT; //5.25; /* inhibitory population initial rate */
 	
@@ -132,7 +136,9 @@ int main(void) {
 		/* update weights here */
 		// updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post)
 		rho[jt] = updateWeight(rho[jt-1], dwt, nu_e[it], cpre, cpost);
-		w_ee[it] = w_min + (w_len * rho[jt]); // -1 due to extra increment on loop above
+		//TODO: reenable weight updates
+		//w_ee[it] = w_min + (w_len * rho[jt]); // -1 due to extra increment on loop above
+		w_ee[it] = w_min + (w_len * RHO_FIXED);
 		/*}
 		else{
 			w_ee[it] = w_ee[it-1];
