@@ -26,7 +26,7 @@
 #define RHO_FIXED 0.5
 
 #define J_EXT (0.01)
-#define NU_E_INIT (1.25)
+#define NU_E_INIT (1.5)
 #define NU_I_INIT (1.25)
 
 #define cpre 0.56
@@ -35,7 +35,7 @@
 #define tau_e 0.02 //0.01 /* excitatory population time constant (seconds) */
 #define tau_i 0.02 //0.01 /* inhibitory population time constant (seconds) */
 #define tau_me 0.02 /* excitatory membrane time constant (seconds) */
-#define tau_mi 0.02 //0.01 /* inhibitory membrane time constant (seconds) */
+#define tau_mi 0.01 //0.02 //0.01 /* inhibitory membrane time constant (seconds) */
 #define theta 0.016 //0.02 //0.016 //0.02 /* threshold potential */
 #define v_r 0.002 //0.01 //0.02 //0.01 //0. /* reset potential */
 #define sigma 5.e-3 //0.5e-3 //5.e-3 //0.5e-3 /* noise */
@@ -143,7 +143,7 @@ int main(void) {
 		else{
 			w_ee[it] = w_ee[it-1];
 		}*/
-		if(rho[jt-1] - rho[jt] < 0.00001){
+		if(fabs(rho[jt-1] - rho[jt]) < 0.00001){
 			printf("BAZINGA!\n");
 		}
 		
