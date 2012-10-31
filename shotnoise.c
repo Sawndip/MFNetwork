@@ -4,22 +4,22 @@
 #include "shotnoise.h"
 
 #define EPSILLON 0.00001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
-#define tauca 0.023 /*0.0227*/
+#define tauca 0.0226936 /*0.0227*/
 //#define cpre 0.56 /* moved to local variables to allow changing via function argument */
 //#define cpost 1.24
 #define thetad 1
 #define thetap 1.3
-#define gammad 332.
-#define gammap 725.
-#define sigma 3.35
-#define tau 346.361 /* 346 */
+#define gammad 331.909
+#define gammap 725.085
+#define sigma 0. /*3.3501*/
+#define tau 346.3615 /* 346 */
 #define rhostar 0.5
 //#define D 0.0046 /* unused */
 #define fup 0.5
 #define cmich 5.41
 #define cmin ((cpre<cpost)?cpre:cpost)
 #define cmax 30. /* cmax=30 and dc=0.001 make the computations somewhat safe up to r=100Hz */
-#define dc 0.001
+#define dc 0.0001 /*0.001*/
 #define Nintc (int)(cmax/dc)
 #define icpre (int)(cpre/dc)
 #define icpost (int)(cpost/dc)
@@ -82,9 +82,9 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
     for(ic=1;ic<icmin+1;ic++) {
       c = ic*dc;
       P[ic] = Pfirst(c,r);
-	  if(( ic % (1) ) == 0){
-		  //printf("P1[%d]: %f, \n", ic, P[ic]);
-	  }
+	  /*if(( ic % (1) ) == 0){
+		  printf("P1[%d]: %f, \n", ic, P[ic]);
+	  }*/
 	  fprintf(fp, "%f %f\n", c, P[ic]);
     }
 	//printf("P[%d]: %f, intP(%d): %f\n", icmin, P[icmin], icmin, intP);
@@ -204,12 +204,12 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-/*int main(void){
+int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
 	float rate = 0.01;
-	float c_pre = 0.56;
-	float c_post = 1.24;
+	float c_pre = 0.33705; //0.5617539;
+	float c_post = 0.74378; //1.23964;
 	float alphas[2];
 	
 	float rhobar;
@@ -218,7 +218,8 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	strcpy(filename, "fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
 	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
-	for(float i = 0.; i < 0.5; i+=.001){
+	//for(float i = 0.; i < 0.5; i+=.001){
+	for(float i = 1.0; i < 1.1; i+=1){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
@@ -236,5 +237,5 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}*/
+}
 

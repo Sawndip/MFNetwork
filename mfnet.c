@@ -11,22 +11,22 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee 400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie 400 //1000 //4000 
-#define c_ei 100 //250 //1000 
-#define c_ii 100 //250 //1000
+#define c_ee 7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie 8000 //400 //1000 //4000 
+#define c_ei 2000 //100 //250 //1000 
+#define c_ii 1999 //100 //250 //1000
 
-#define w_ie 0.2e-3 //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
-#define w_ei 0.4e-3 //0.4e-3 //0.6e-3  
-#define w_ii 0.8e-3 //0.8e-3 //0.6e-3 
+#define w_ie (0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
+#define w_ei (0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
+#define w_ii (0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
 #define w_min 0.0
-#define w_len 0.2e-3 //0.1e-3 //1.0e-3
+#define w_len (0.2e-3 * 0.05) //0.1e-3 //1.0e-3
 #define RHO_INIT 0.38 //1.
 
 #define RHO_FIXED 0.5
 
 #define J_EXT (0.01)
-#define NU_E_INIT (1.5)
+#define NU_E_INIT (1.25)
 #define NU_I_INIT (1.25)
 
 #define cpre 0.56
@@ -35,7 +35,7 @@
 #define tau_e 0.02 //0.01 /* excitatory population time constant (seconds) */
 #define tau_i 0.02 //0.01 /* inhibitory population time constant (seconds) */
 #define tau_me 0.02 /* excitatory membrane time constant (seconds) */
-#define tau_mi 0.01 //0.02 //0.01 /* inhibitory membrane time constant (seconds) */
+#define tau_mi 0.02 //0.02 //0.01 /* inhibitory membrane time constant (seconds) */
 #define theta 0.016 //0.02 //0.016 //0.02 /* threshold potential */
 #define v_r 0.002 //0.01 //0.02 //0.01 //0. /* reset potential */
 #define sigma 5.e-3 //0.5e-3 //5.e-3 //0.5e-3 /* noise */
@@ -46,7 +46,7 @@
 #define NintT ((int)(tmax/dt))
 #define wNintT ((int)(tmax/dwt))
 #define mfNintT ((int)(dwt/dt))
-#define CONVERGENCE_CRITERION (0.1)
+#define CONVERGENCE_CRITERION (0.001)
 /* tau_rp defined in newcv.c */
 
 
