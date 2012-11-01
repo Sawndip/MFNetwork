@@ -24,12 +24,59 @@
 #define icpre (int)(cpre/dc)
 #define icpost (int)(cpost/dc)
 #define icmin (int)(cmin/dc)
+//Additions for hypergeometric solution
+#define cother ((cpre<cpost)?cpost:cpre)
+#define cimin (((2*cmin)<cother)?(2*cmin):cother)
+#define c2min (cmin + 0.5*(cimin - cmin))
+#define ic2min (int)(c2min/dc)
+#define LARGE_NO 20 // LARGE_NO! cannot be bigger than unsigned long int or HyperFunc21 cannot be relied upon
+
 
 char filename[100];
 
+// Hypergeometric function
+float HyperFunc21(float a, float b, float c, float z){
+	// Only static arrays (al,bl,cl) would help with efficiency here
+	long double s;
+	long double al = 1., bl = 1., cl = 1.;
+	int i = 1;
+	unsigned long int nl = 1;
+	
+	s = 1.; // n=0 case
+	
+	for(int n = 1; n < LARGE_NO; n++){
+		for(; i < (n+1); i++){ // Reminder: i always exits this loop with i=(n+1)
+			//printf("n: %d, i: %d, ", n, i);
+			al *= (a + i - 1);
+			bl *= (b + i - 1);
+			cl *= (c + i - 1);
+		}
+		
+		nl *= n; // running computation of factorial(n)
+		s += ((al * bl) / cl) * (pow(z, n) / nl);
+		//printf("nl: %ld, s: %f\n", nl, (float)s); 
+	}
+	
+	//printf("s: %f, ", (float)s);
+	return (float)s;
+}
+
+// Analytical solution for first interval [0,cmin]
 float Pfirst(float c, float r) {
 	//printf("Pfirst: %f ", pow(c,2.*r*tauca-1.) );
-  return(pow(c,2.*r*tauca-1.));
+	return(pow(c,2.*r*tauca-1.));
+}
+
+// Analytical solution for second interval (cmin,c2min]
+float Psecond(float c, float r, float cpre, float cpost){
+	float a, b, d;
+	
+	a = pow(c, 2.*r*tauca-1.);
+	b = pow((c-cmin)/cmin, (2.*r*tauca)) / 2.; //pow((c-cmin), (2.*r*tauca-1));
+	//d = HyperFunc21(2*r*tauca, 2*r*tauca, 2*r*tauca+1, 1-c);
+	d = HyperFunc21(2*r*tauca, 2*r*tauca, 2*r*tauca + 1, (cmin-c)/cmin);
+	
+	return (a * (1 - b * d));
 }
 
 float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post){
@@ -55,7 +102,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	
   float cpre = c_pre;
   float cpost = c_post;
-	float interP;
+	//float interP; //debugging of a crossover point
 	FILE *fp;
 	fp = fopen("shot_output.dat", "w");
 	//fp = fopen(filename, "w");
@@ -79,6 +126,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		alphap = 0.;
 	
     /*printf("%f\n",cmin);*/
+	// Solve first interval analytically
     for(ic=1;ic<icmin+1;ic++) {
       c = ic*dc;
       P[ic] = Pfirst(c,r);
@@ -88,18 +136,31 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	  fprintf(fp, "%f %f\n", c, P[ic]);
     }
 	//printf("P[%d]: %f, intP(%d): %f\n", icmin, P[icmin], icmin, intP);
+	  
+	// Solve second interval analytically partly using hypergeometric function
+	for(ic =icmin+1; ic < ic2min+1; ic++){
+	  c = ic*dc;
+	  P[ic] = Psecond(c, r, cpre, cpost);
+	  /*if(( ic % (1) ) == 0){
+			printf("P2[%d]: %f, \n", ic, P[ic]);
+	   }*/
+	}
 	
-    for(ic=icmin+1;ic<Nintc;ic++) {
+	// Fill out rest of interval to Nintc using exponential Euler formulation
+    for(ic=ic2min+1;ic<Nintc;ic++) {
       c = ic*dc;
 	  if(ic<icpre+1){ 
+		  // cpre does not contribute as backward reference would be to -ve c value
 		  pcmcpre=0.;
 	  }
       else if(ic==icpre+1){
+		  // analytical solution at turning point induced by cpre
 		  //printf("ic==icpre+1\n");
 		  pcmcpre=0.5*pow(dc/cpre,2*r*tauca)/(r*tauca);
 		  //printf("pcmcpre: %f, ", pcmcpre);
 	  }
       else{
+		  // backward reference to P(c-cpre) to get contribution of cpre to current P(c) value
 		  pcmcpre=0.5*dc*( P[(int)((c-cpre)/dc + EPSILLON)]/pow(c,2.*r*tauca) + P[(int)((c-cpre)/dc + EPSILLON)-1]/pow(c-dc,2.*r*tauca) );
 		  /*if(ic % 58 ==0){
 			  printf("pcmcpre: %f, c: %f, cpre: %f, (c-cpre): %f, (c-cpre)/dc: %d, P[0]: %f\n", pcmcpre, c, cpre, (c-cpre), (int)((c-cpre)/dc), P[0]);
@@ -107,20 +168,25 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
       }
 		
 	  if(ic<icpost+1){ 
+		  // cpost does not contribute as backward reference would be to -ve c value
 		  pcmcpost=0.;
 	  }
       else if(ic==icpost+1){
+		  // analytical solution at turning point induced by cpost
 		  //printf("ic==icpost+1\n");
 		  pcmcpost=0.5*pow(dc/cpost,2*r*tauca)/(r*tauca);
 		  //printf("pcmcpost: %f, ", pcmcpost);
 	  }
       else{
+		  // backward reference to P(c-cpost) to get contribution of cpost to current P(c) value
 		  pcmcpost=0.5*dc*( P[(int)((c-cpost)/dc + EPSILLON)]/pow(c,2.*r*tauca) + P[(int)((c-cpost)/dc + EPSILLON)-1]/pow(c-dc,2.*r*tauca) );
 		  //printf("pcmcpost: %f, ", pcmcpost);
 	  }
-		
+	
+	  // Update P(c) based on exponential euler and influence of cpre and cpost
 	  P[ic] = pow(c,2*r*tauca-1)*(P[ic-1]/pow(c-dc,2*r*tauca-1)-r*tauca*(pcmcpre+pcmcpost));
 	  if(P[ic] < 0){
+		  // P(c) should never be less than 0, reset to zero.
 		  /*if(( ic % (1) ) == 0){
 			  printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
 		  }*/
@@ -129,25 +195,28 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	  fprintf(fp, "%f %f\n", c, P[ic]);
 	  //printf("P[%d]: %f ", ic, P[ic]);
 	  //printf("comp: %f ", (r*tauca*(pcmcpre+pcmcpost)) );
+	  // Update integral of P(c) curve
       intP += 0.5*dc*(P[ic-1] + P[ic]);
-	  if(ic == 172){
+	  /*if(ic == 172){// debugging code around a crossover point
 		  //printf("----> intP[17200]: %f, \n", intP);
 		  interP = intP;
-	  }
+	  }*/
 	  //printf("intP: %f\n", intP);
       /*printf("%f %f %f %f %f\n",c,pcmcpre,pcmcpost,P[ic],intP);*/
-	  if(c > thetad){ 
+	  if(c > thetad){
+		  // c>thetad, so update value of alphad (amount of time above depression threshold)
 		  alphad += 0.5*dc*(P[ic-1] + P[ic]);
 	  }
 	  if(c > thetap){
+		  // c>thetap, so update value of alphap (amount of tima above potentiation threshold)
 		  //printf("alphap += %f, P[%d-1]:%f, P[%d]:%f,", (0.5*dc*(P[ic-1] + P[ic])), ic, P[ic-1], ic, P[ic]);
 		  alphap += 0.5*dc*(P[ic-1] + P[ic]);
 		  //printf(" alphap: %f\n", alphap);
 	  }
 	  //printf("Alphap: %f\n", alphap);
-	  if(( ic % (1) ) == 0){
-		  //printf("P2[%d]: %f, \n", ic, P[ic]);
-	  }
+	  /*if(( ic % (1) ) == 0){ //debugging code
+		  printf("P3[%d]: %f, \n", ic, P[ic]);
+	  }*/
     }
 	
 	//printf("1)alphap: %f, ", alphap);
@@ -158,10 +227,11 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		//printf("intP: %f, ", intP);
 		alphad /= intP;
 		alphap /= intP;
-		interP /= intP;
+		//interP /= intP;
 		//printf("alphap: %f, alphad: %f, interP: %f\n", alphap, alphad, interP);
 	}
 	//printf("2)alphap: %f, ", alphap);
+	// Gamma values are alpha values weighted by learning rates
     Gammad = gammad * alphad;
     Gammap = gammap * alphap;
 	/*for(ic=1;ic<Nintc;ic++) {
@@ -171,6 +241,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
      printf("\n");*/
     /*printf("%f %f %f %f\n",r,alphad,alphap,Gammap/(Gammad+Gammap));*/
 	if ((Gammad == 0) && (Gammap == 0)){
+		// Calcium has not crossed either threshold (thetap and thetad) so no change can occur
 		printf("Gammap and Gammad == 0, alphap: %.10f, alphad: %f, intP(%d): %f\n", alphap, alphad, ic, intP);
 	}
 	else{
@@ -184,11 +255,11 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
     }
 	//}
 	if (alphad < 0){ //This case should no longer occur! (when modification for P(I)<0 is enabled above)
-		//alphad = 0.;
+		alphad = 0.;
 		printf("changing alphad\n");
 	}
 	if (alphap < 0){
-		//alphap = 0.;
+		alphap = 0.;
 		printf("changing alphap\n");
 	}
 	alphas[0] = alphad;
