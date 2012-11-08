@@ -26,10 +26,11 @@
 #define icmin (int)(cmin/dc)
 //Additions for hypergeometric solution
 #define cother ((cpre<cpost)?cpost:cpre)
-#define cimin (((2*cmin)<cother)?(2*cmin):cother)
-#define c2min (cmin + 0.5*(cimin - cmin))
+//#define cimin (((2*cmin)<cother)?(2*cmin):cother)
+//#define c2min (cmin + 0.5*(cimin - cmin))
+#define c2min (((2*cmin)<cother)?(2*cmin):cother)
 #define ic2min (int)(c2min/dc)
-#define LARGE_NO 20 // LARGE_NO! cannot be bigger than unsigned long int or HyperFunc21 cannot be relied upon
+#define LARGE_NO 20 // factorial(150) is upperlimit for double type so keep this below 150
 
 
 char filename[100];
@@ -37,25 +38,30 @@ char filename[100];
 // Hypergeometric function
 float HyperFunc21(float a, float b, float c, float z){
 	// Only static arrays (al,bl,cl) would help with efficiency here
-	long double s;
-	long double al = 1., bl = 1., cl = 1.;
-	int i = 1;
-	unsigned long int nl = 1;
+	double al = 1., bl = 1., cl = 1.;
+	double nl = 1.;
+	double coef = 1.0;
+	double s;
+	int n;
 	
 	s = 1.; // n=0 case
 	
-	for(int n = 1; n < LARGE_NO; n++){
-		for(; i < (n+1); i++){ // Reminder: i always exits this loop with i=(n+1)
+	for(n = 1; n < LARGE_NO && fabs(coef)>0.000001; n++){
+		//TODO: the following loop is not really necessary, is it?
+		//for(; i < (n+1); i++){ // Reminder: i always exits this loop with i=(n+1)
 			//printf("n: %d, i: %d, ", n, i);
-			al *= (a + i - 1);
-			bl *= (b + i - 1);
-			cl *= (c + i - 1);
-		}
+			al *= (a + n - 1);
+			bl *= (b + n - 1);
+			cl *= (c + n - 1);
+		//}
 		
 		nl *= n; // running computation of factorial(n)
-		s += ((al * bl) / cl) * (pow(z, n) / nl);
+		coef = ((al * bl) / cl) * (pow(z, n) / nl);
+		s += coef;
 		//printf("nl: %ld, s: %f\n", nl, (float)s); 
 	}
+		
+	//printf("hyperfn: n final: %d, s: %f\n", n, s);
 	
 	//printf("s: %f, ", (float)s);
 	return (float)s;
@@ -141,6 +147,28 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	for(ic =icmin+1; ic < ic2min+1; ic++){
 	  c = ic*dc;
 	  P[ic] = Psecond(c, r, cpre, cpost);
+	//TODO: floor on P[ic]
+	  if(P[ic] < 0){
+			// P(c) should never be less than 0, reset to zero.
+			/*if(( ic % (1) ) == 0){
+			 printf("Yowzah, P[%d]: %f\n", ic, P[ic]);
+			 }*/
+			P[ic] = 0.;
+		  printf("flooring P(c)\n");
+	  }
+	//TODO: update intP here!
+	  intP += 0.5*dc*(P[ic-1] + P[ic]);
+	//TODO: update alphas here!
+		if(c > thetad){
+			// c>thetad, so update value of alphad (amount of time above depression threshold)
+			alphad += 0.5*dc*(P[ic-1] + P[ic]);
+		}
+		if(c > thetap){
+			// c>thetap, so update value of alphap (amount of tima above potentiation threshold)
+			//printf("alphap += %f, P[%d-1]:%f, P[%d]:%f,", (0.5*dc*(P[ic-1] + P[ic])), ic, P[ic-1], ic, P[ic]);
+			alphap += 0.5*dc*(P[ic-1] + P[ic]);
+			//printf(" alphap: %f\n", alphap);
+		}
 	  /*if(( ic % (1) ) == 0){
 			printf("P2[%d]: %f, \n", ic, P[ic]);
 	   }*/
@@ -279,8 +307,8 @@ int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
 	float rate = 0.01;
-	float c_pre = 0.33705; //0.5617539;
-	float c_post = 0.74378; //1.23964;
+	float c_pre = 0.3370;//5; //0.33705; //0.5617539;
+	float c_post = 0.7437;//8; //0.74378; //1.23964;
 	float alphas[2];
 	
 	float rhobar;
@@ -289,18 +317,20 @@ int main(void){
 	strcpy(filename, "fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
 	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
-	//for(float i = 0.; i < 0.5; i+=.001){
-	for(float i = 1.0; i < 1.1; i+=1){
+	//for(float i = 0.1; i < 100; i+=1){
+	//for(float i = 1.0; i < 1.1; i+=1){
+	for(float i = -1; i < 2.001; i+=0.1){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
-		rate = (float) i;
+		//rate = (float) i;
+		rate = pow(10, i);
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
 		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
-		printf("i: %f, alphas[0]: %f, alphas[1]: %f\n\n", i, alphas[0], alphas[1]);
-		fprintf(fp, "%f %f %f %f %f, %f, %f, %f\n", i, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
+		printf("i: %f, rate: %f, alphas[0]: %f, alphas[1]: %f\n\n", i, rate, alphas[0], alphas[1]);
+		fprintf(fp, "%f %f %f %f %f, %f, %f, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
