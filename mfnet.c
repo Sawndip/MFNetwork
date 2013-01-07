@@ -11,23 +11,23 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee 7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie 8000 //400 //1000 //4000 
-#define c_ei 2000 //100 //250 //1000 
-#define c_ii 1999 //100 //250 //1000
+#define c_ee 400 //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie 400 //8000 //400 //1000 //4000 
+#define c_ei 100 //2000 //100 //250 //1000 
+#define c_ii 100 //1999 //100 //250 //1000
 
-#define w_ie (0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
-#define w_ei (0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
-#define w_ii (0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
+#define w_ie 0.2e-3 //(0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
+#define w_ei 0.4e-3 //(0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
+#define w_ii 0.8e-3 //(0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
 #define w_min 0.0
-#define w_len (0.2e-3 * 0.05) //0.1e-3 //1.0e-3
-#define RHO_INIT 0.38 //1.
+#define w_len 0.2e-3 //(0.2e-3 * 0.05) //0.2e-3 //1.0e-3
+#define RHO_INIT 0.176923 //165 //0.35 //0.38 //0.5 //1.
 
-#define RHO_FIXED 0.5
+//#define RHO_FIXED 0.5
 
-#define J_EXT (0.01)
-#define NU_E_INIT (1.25)
-#define NU_I_INIT (1.25)
+#define J_EXT (0.0072) /*(0.0066)*/
+#define NU_E_INIT (1.0) /*(1.25)*/
+#define NU_I_INIT (1.0) /*(1.25)*/
 
 #define cpre 0.56
 #define cpost 1.24
@@ -63,8 +63,8 @@ int main(void) {
 	
 	rho[0] = RHO_INIT;
 	//TODO: reenable weight update
-	//w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
-	w_ee[0] = w_min + (w_len * RHO_FIXED);
+	w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
+	//w_ee[0] = w_min + (w_len * RHO_FIXED);
 	nu_e[0] = NU_E_INIT; //5.25; /* excitatory population initial rate */
 	nu_i[0] = NU_I_INIT; //5.25; /* inhibitory population initial rate */
 	
@@ -137,8 +137,8 @@ int main(void) {
 		// updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post)
 		rho[jt] = updateWeight(rho[jt-1], dwt, nu_e[it], cpre, cpost);
 		//TODO: reenable weight updates
-		//w_ee[it] = w_min + (w_len * rho[jt]); // -1 due to extra increment on loop above
-		w_ee[it] = w_min + (w_len * RHO_FIXED);
+		w_ee[it] = w_min + (w_len * rho[jt]); // -1 due to extra increment on loop above
+		//w_ee[it] = w_min + (w_len * RHO_FIXED);
 		/*}
 		else{
 			w_ee[it] = w_ee[it-1];

@@ -274,12 +274,12 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
   }
 }
     
-int main(void){
+/*int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
 	float rate = 0.01;
-	float c_pre = 0.562;//0;//5; //0.33705; //0.5617539;
-	float c_post = 1.24; //7;//8; //0.74378; //1.23964;
+	float c_pre = 0.337;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	float c_post = 0.744;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	float alphas[2];
 	
 	float rhobar;
@@ -290,7 +290,7 @@ int main(void){
 	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
-	for(float i = -1; i < 2.001; i+=0.1){
+	for(float i = -4; i < 2.001; i+=0.05){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
@@ -301,7 +301,7 @@ int main(void){
 		getAlphas(rate, c_pre, c_post, alphas);
 		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
 		printf("i: %f, rate: %f, alphas[0]: %f, alphas[1]: %f\n\n", i, rate, alphas[0], alphas[1]);
-		fprintf(fp, "%f %f %f %f %f, %f, %f, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
+		fprintf(fp, "%f %0.10f %0.10f %f %f, %0.8f, %0.8f, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
@@ -309,5 +309,5 @@ int main(void){
 	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}
+}*/
 
