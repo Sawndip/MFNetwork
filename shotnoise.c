@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h> // malloc()
 
 #include "shotnoise.h"
 
@@ -17,8 +18,9 @@
 //#define D 0.0046 /* unused */
 #define fup 0.5
 #define cmich 5.41
-#define cmax 30. /* cmax=30 and dc=0.001 make the computations somewhat safe up to r=100Hz */
-#define dc 0.001 /*0.001*/
+/* cmax=30 makes the computations somewhat safe up to r=100Hz */
+#define cmax 30.
+#define dc 0.00001 /*0.001*/
 #define Nintc (int)(cmax/dc) //EPSILLON
 
 // Setup intervals for analytical solutions
@@ -48,8 +50,8 @@
 char filename[100];
 
 // Hypergeometric function
-//float HyperFunc21(float a, float b, float c, float z){
-float myHyperFunc21(float a, float z){ //a=2*r*tauca, z = cpre-c/cpre
+//double HyperFunc21(float a, float b, float c, float z){
+double myHyperFunc21(float a, float z){ //a=2*r*tauca, z = cpre-c/cpre
 	// Only static arrays (al,bl,cl) would help with efficiency here
 	double al = 1.;//, bl = 1., cl = 1.;
 	double nl = 1.;
@@ -83,11 +85,11 @@ float myHyperFunc21(float a, float z){ //a=2*r*tauca, z = cpre-c/cpre
 	//printf("hyperfn: n final: %d, s: %f\n", n, s);
 	
 	//printf("s: %f, ", (float)s);
-	return (float)s;
+	return s;
 }
 
 // Analytical solution for first interval [0,cfirst]
-float Pfirst(float c, float r) {
+double Pfirst(double c, double r) {
 	//printf("Pfirst: %f ", pow(c,2.*r*tauca-1.) );
 	return(pow(c,2.*r*tauca-1.));
 }
@@ -104,8 +106,8 @@ float Pfirst(float c, float r) {
 	return (a * (1 - b * d));
 }*/
 
-float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float c_post){
-	float rho_new, d_rho, alphas[2];
+double updateWeight(double rho_old, double stepsize, double rate, double c_pre, double c_post){
+	double rho_new, d_rho, alphas[2];
 	d_rho = 0.;
 	
 	getAlphas(rate, c_pre, c_post, alphas);
@@ -117,19 +119,22 @@ float updateWeight(float rho_old, float stepsize, float rate, float c_pre, float
 	return rho_new;
 }
 
-void getAlphas(float rate, float c_pre, float c_post, float *alphas){
+void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	/* This function has been modified to handle a zero firing rate by returning alphas=0,
 		it does not necessarily handle other variables correctly in that case */
-	float P[Nintc],intP,alphad,alphap,r, Qpre, Qpost;//pcmcpre,pcmcpost
-	float Gammap,Gammad,c;
-	float rhobar,sigmap,taueff,UP,DOWN,synchange;
+	double intP,alphad,alphap,r, Qpre, Qpost;//pcmcpre,pcmcpost
+	double Gammap,Gammad,c;
+	double rhobar,sigmap,taueff,UP,DOWN,synchange;
 	int ic;
 
+	//double P[Nintc]
+	double *P = calloc(Nintc, sizeof(double));
+	
 	Qpre = 0.;
 	Qpost = 0.;
 	
-	float cpre = c_pre;
-	float cpost = c_post;
+	double cpre = c_pre;
+	double cpost = c_post;
 	//float interP; //debugging of a crossover point
 	FILE *fp;
 	fp = fopen("shot_output.dat", "w");
@@ -221,7 +226,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		printf("Error: intP==0, you need to increase cmax\n");
 	}
 	else{
-		printf("intP: %f, ", intP);
+		printf("intP: %lf, ", intP);
 		alphad /= intP;
 		alphap /= intP;
 		//interP /= intP;
@@ -239,7 +244,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
     /*printf("%f %f %f %f\n",r,alphad,alphap,Gammap/(Gammad+Gammap));*/
 	if ((Gammad == 0) && (Gammap == 0)){
 		// Calcium has not crossed either threshold (thetap and thetad) so no change can occur
-		printf("Gammap and Gammad == 0, alphap: %.10f, alphad: %f, intP(%d): %f\n", alphap, alphad, ic, intP);
+		printf("Gammap and Gammad == 0, alphap: %.10lf, alphad: %lf, intP(%d): %lf\n", alphap, alphad, ic, intP);
 	}
 	else{
 		rhobar = Gammap / (Gammad + Gammap);
@@ -248,7 +253,7 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
-		printf("rate: %f, alphad: %f, alphap: %f, rhobar: %f, UP:%f,  DOWN:%f, synchange:%f\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
+		printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
     }
 	//}
 	if (alphad < 0){ //This case should no longer occur! (when modification for P(I)<0 is enabled above)
@@ -265,24 +270,27 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
 		
-	printf("DEBUG cfirst: %f, csecondpre: %f, csecondpost: %f, icpre: %d, icpost: %d\n", cfirst, csecondpre, csecondpost, icpre, icpost);
+	printf("DEBUG cfirst: %lf, csecondpre: %lf, csecondpost: %lf, icpre: %d, icpost: %d\n", cfirst, csecondpre, csecondpost, icpre, icpost);
   }
   else{ // Rate == 0, no activity, set alphas to 0
 	printf("Rate == 0, manually setting alphas to 0.\n");
 	alphas[0] = 0.;
 	alphas[1] = 0.;
   }
+	
+	free(P);
 }
     
-/*int main(void){
+int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
-	float rate = 0.01;
-	float c_pre = 0.337;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
-	float c_post = 0.744;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
-	float alphas[2];
+	double rate = 0.01;
+	rate = 1;
+	double c_pre = 0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	double alphas[2];
 	
-	float rhobar;
+	double rhobar;
 	
 	FILE* fp;	
 	strcpy(filename, "fine_rate_dep_alphas.dat");
@@ -290,24 +298,25 @@ void getAlphas(float rate, float c_pre, float c_post, float *alphas){
 	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
-	for(float i = -4; i < 2.001; i+=0.05){
+	//for(double i = -4; i < 2.001; i+=0.005){
+	for(double i = 1; i < 2.001; i+=10.005){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
 		//rate = (float) i;
-		rate = pow(10, i);
+		//rate = pow(10, i);
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
 		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
-		printf("i: %f, rate: %f, alphas[0]: %f, alphas[1]: %f\n\n", i, rate, alphas[0], alphas[1]);
-		fprintf(fp, "%f %0.10f %0.10f %f %f, %0.8f, %0.8f, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
+		printf("i: %f, rate: %lf, alphas[0]: %lf, alphas[1]: %lf\n\n", i, rate, alphas[0], alphas[1]);
+		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
 	
-	printf("cmax: %f, dc: %f, Nintc: %f\n", cmax, dc, (float)Nintc);
+	printf("cmax: %lf, dc: %lf, Nintc: %lf\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}*/
+}
 

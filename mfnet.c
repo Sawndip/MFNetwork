@@ -21,16 +21,16 @@
 #define w_ii 0.8e-3 //(0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
 #define w_min 0.0
 #define w_len 0.2e-3 //(0.2e-3 * 0.05) //0.2e-3 //1.0e-3
-#define RHO_INIT 0.176923 //165 //0.35 //0.38 //0.5 //1.
+#define RHO_INIT 0.185 /*0.176923 1hz net*/ //165 //0.35 //0.38 //0.5 //1.
 
 //#define RHO_FIXED 0.5
 
-#define J_EXT (0.0072) /*(0.0066)*/
+#define J_EXT (0.0072) /*(0.0072) 1hz network*/ /*(0.0066)*/
 #define NU_E_INIT (1.0) /*(1.25)*/
 #define NU_I_INIT (1.0) /*(1.25)*/
 
-#define cpre 0.56
-#define cpost 1.24
+#define cpre 0.337 //0.56
+#define cpost 0.744 //1.24
 
 #define tau_e 0.02 //0.01 /* excitatory population time constant (seconds) */
 #define tau_i 0.02 //0.01 /* inhibitory population time constant (seconds) */
