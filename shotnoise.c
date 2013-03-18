@@ -20,7 +20,7 @@
 #define cmich 5.41
 /* cmax=30 makes the computations somewhat safe up to r=100Hz */
 #define cmax 30.
-#define dc 0.00001 /*0.001*/
+#define dc 0.00001 /*0.00001*/ /*0.001*/
 #define Nintc (int)(cmax/dc) //EPSILLON
 
 // Setup intervals for analytical solutions
@@ -113,7 +113,12 @@ double updateWeight(double rho_old, double stepsize, double rate, double c_pre, 
 	getAlphas(rate, c_pre, c_post, alphas);
 	
 	d_rho = ((gammap * alphas[1]) - rho_old * (gammap * alphas[1] + gammad * alphas[0])) / tau;
-	rho_new = rho_old + (stepsize * d_rho);
+	// Original, converges too slowly but is very stable
+	//rho_new = rho_old + (stepsize * d_rho);
+	// Magnified step size
+	//rho_new = rho_old + (1000 * stepsize * d_rho);
+	// TODO: Instantaneous jump to rho_bar
+	rho_new = (gammap * alphas[1]) / (gammap * alphas[1] + gammad * alphas[0]);
 	printf("rho_old: %g, d_rho: %g, rho_new: %g\n", rho_old, d_rho, rho_new);
 	printf("alphad: %g, alphap: %g\n", alphas[0], alphas[1]);
 	return rho_new;
@@ -281,19 +286,24 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	free(P);
 }
     
-int main(void){
+/*int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
-	double rate = 0.01;
-	rate = 1;
-	double c_pre = 0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
-	double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	double rate = 0.944262;
+	
+	rate = 10;
+	rate = 9.0359;
+	rate = 0.94;
+	rate = 5;
+	
+	double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	double alphas[2];
 	
 	double rhobar;
 	
 	FILE* fp;	
-	strcpy(filename, "fine_rate_dep_alphas.dat");
+	strcpy(filename, "correct_fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
 	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
 	//for(float i = 0.1; i < 100; i+=1){
@@ -319,4 +329,4 @@ int main(void){
 	
 	return 0;
 }
-
+*/
