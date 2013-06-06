@@ -57,7 +57,7 @@
 #define RHO_FIXED RHO_INIT //0.502964
 
 #define J_EXT (0.011046) /*(0.0108731)*/ /*(0.0108731)*/ /*(0.006966)*/ /*(0.00707)*/ /*(0.00695)*/ /*(0.006944)*/ /*(0.0113628)*/ /*(0.00695)*/ /*(0.00686) in-vivo*/ /*(0.0072) 1hz network*/ /*(0.0066)*/
-#define J_STIM (0.011046)
+#define J_STIM (0.02455)
 
 #define NU_E_INIT (10.2) /*(1.25)*/
 #define NU_I_INIT (10.2) /*(1.25)*/
@@ -79,7 +79,7 @@ double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
 #define tau_s 0.02 /* s-population time constant (seconds)*/
 #define tau_ms 0.02 /* s-population membrane time constant (seconds)*/
 
-#define tmax 3.0 //30. //0.1 //3.1002 //10. /* seconds */
+#define tmax 13.0 //30. //0.1 //3.1002 //10. /* seconds */
 #define dt 0.0001
 #define dwt 0.100
 #define NintT ((int)(tmax/dt))
@@ -133,7 +133,7 @@ int main(void) {
 	jt=0; // Synaptic efficacy index variable
 	
 	printf("Inputs: mu_e: %gV, mu_i: %gV, mu_s: %gV. Equivalent to: nu_ext_e: %gHz, nu_ext_i: %gHz\n", mu_e, mu_i, mu_s, (mu_e/(c_ee * w_ee[0] * tau_me)), (mu_i/(c_ie * w_ie * tau_me)));
-	printf("time: 0.00, nu_e[0]: %f, nu_i[0]: %f, w_ee[0]: %g\n", nu_e[it], nu_i[it], w_ee[it]);
+	printf("time: 0.00, nu_e[0]: %f, nu_i[0]: %f, nu_s[0]: %f, w_ee[0]: %g\n", nu_e[it], nu_i[it], nu_s[it], w_ee[it]);
 	
 	fprintf(output_file, "%f %f %f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt], nu_s[it], w_ss[it]);
 	//for(it = 1; it < NintT; it++){
@@ -149,7 +149,6 @@ int main(void) {
 			// Update Mean-field equations, until next scheduled synapse update (or stop early upon convergence)
 			it = (mt * mfNintT) + nt;
 			
-			//TODO: add a third population to account for stimulated subpopulation
 			//phi_mu_e = mu_e + (c_ee * w_ee[it-1] * tau_me * nu_e[it-1]) - (c_ei * w_ei * tau_me * nu_i[it-1]);
 			//phi_mu_i = mu_i + (c_ie * w_ie * tau_mi * nu_e[it-1]) - (c_ii * w_ii * tau_mi * nu_i[it-1]);
 			phi_mu_e = mu_e + (c_ee * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_es * w_es[it-1] * tau_me * nu_s[it-1]) - (c_ei * w_ei * tau_me * nu_i[it-1]);
@@ -159,9 +158,9 @@ int main(void) {
 			
 			//sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
 			//sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
-			sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_es * w_es[it-1] * tau_me * nu_s[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
-			sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_is * w_is * tau_mi * nu_s[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
-			sigma_s = sigma_ext + (c_se * w_se[it-1] * tau_ms * nu_e[it-1]) + (c_ss * w_ss[it-1] * tau_ms * nu_s[it-1]) - (c_si * w_si * tau_ms * nu_i[it-1]);
+			sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_es * w_es[it-1] * w_es[it-1] * tau_me * nu_s[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
+			sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_is * w_is * w_is * tau_mi * nu_s[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
+			sigma_s = sigma_ext + (c_se * w_se[it-1] * w_se[it-1] * tau_ms * nu_e[it-1]) + (c_ss * w_ss[it-1] * w_ss[it-1] * tau_ms * nu_s[it-1]) - (c_si * w_si * w_si * tau_ms * nu_i[it-1]);
 			
 			//TODO: enable only external sigma values here
 			//sigma_e = sigma_ext;
@@ -169,6 +168,7 @@ int main(void) {
 			//sigma_s = sigma_ext;
 			printf("sig_e: %f, sig_i: %f, sig_s: %f ", sigma_e, sigma_i, sigma_s);
 			
+			// E-population
 			x_local = (theta - phi_mu_e)/sigma_e;
 			y_local = (v_r - phi_mu_e)/sigma_e;
 			e_trans = trans(x_local, y_local, tau_me);
@@ -179,7 +179,8 @@ int main(void) {
 			//nu_e[it] = e_trans;
 			printf("x: %.2f, y: %.2f, trans: %.6f, de: %.2f, ", x_local, y_local, e_trans, d_nu_e);
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, e_trans);
-		
+			
+			// I-population
 			x_local = (theta - phi_mu_i)/sigma_e; //shouldn't this be sigma_i??
 			y_local = (v_r - phi_mu_i)/sigma_e;
 			i_trans = trans(x_local, y_local, tau_mi);
@@ -191,6 +192,7 @@ int main(void) {
 			printf("x: %.2f, y: %.2f, trans: %.6f, di: %.2f, ", x_local, y_local, i_trans, d_nu_i);
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, i_trans);
 			
+			// S-population
 			x_local = (theta - phi_mu_s)/sigma_s;
 			y_local = (v_r - phi_mu_s)/sigma_s;
 			s_trans = trans(x_local, y_local, tau_ms);
@@ -199,7 +201,7 @@ int main(void) {
 			nu_s[it] = nu_s[it-1] + (dt * d_nu_s);
 			// TODO: Quick and dirty jump to transfer function value
 			//nu_s[it] = s_trans;
-			printf("x: %.2f, y: %.2f, trans: %.6f, di: %.2f, ", x_local, y_local, s_trans, d_nu_s);
+			printf("x: %.2f, y: %.2f, trans: %.6f, ds: %.2f, ", x_local, y_local, s_trans, d_nu_s);
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, i_trans);
 			
 			if(nt < mfNintT){ // On last pass through loop only update MF equations, don't update weight or output to file
@@ -215,6 +217,7 @@ int main(void) {
 				//printf("d_nu_e: %0.8f, d_nu_i: %0.8f, ", d_nu_e, d_nu_i);
 				
 				convergence = fmax(fabs(d_nu_e), fabs(d_nu_i));
+				convergence = fmax(convergence, fabs(d_nu_s));
 				if(convergence < CONVERGENCE_CRITERION){
 					printf("convergence at %f, it: %d\n", convergence, it);
 					nu_e[((mt+1)*mfNintT)] = nu_e[it];
