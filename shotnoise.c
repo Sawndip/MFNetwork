@@ -12,7 +12,8 @@
 #define thetap 1.3
 #define gammad 331.909
 #define gammap 725.085
-#define sigma 0. /*3.3501*/
+//TODO: set sigma to 0 for coupled mean-field calculations
+#define sigma 3.35 /*3.35*/ /*0.*/ /*3.3501*/
 #define tau 346.3615 /* 346 */
 #define rhostar 0.5
 //#define D 0.0046 /* unused */
@@ -295,12 +296,19 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	rate = 9.0359;
 	rate = 0.94;
 	rate = 5;
+	rate = 2.96356;
+	rate = 0.964871;
+	rate = 0.978679;
+	rate = 1.0;
+	//rate = 0.9564;
 	
 	double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 	double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	double alphas[2];
 	
 	double rhobar;
+	
+	double synchange, sigmap, taueff, UP, DOWN;
 	
 	FILE* fp;	
 	strcpy(filename, "correct_fine_rate_dep_alphas.dat");
@@ -309,18 +317,28 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
-	for(double i = 1; i < 2.001; i+=10.005){
+	for(double i = 1; i < 20.001; i+=100){
+	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
-		//rate = (float) i;
+		rate = (float) i;
+		rate = 1.0;
 		//rate = pow(10, i);
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
 		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		//New stuff
+		sigmap = sigma * sqrt( (alphas[1] + alphas[0]) / ((gammap * alphas[1]) + (gammad * alphas[0])) );
+		taueff = tau / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
+		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
+		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
+		//printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
+		//end new stuff
 		printf("i: %f, rate: %lf, alphas[0]: %lf, alphas[1]: %lf\n\n", i, rate, alphas[0], alphas[1]);
-		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)));
+		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)), synchange);
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
@@ -328,5 +346,5 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	printf("cmax: %lf, dc: %lf, Nintc: %lf\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}
-*/
+}*/
+
