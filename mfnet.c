@@ -12,10 +12,16 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee (400) //(395) //(400) //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie (400) //(400) //8000 //400 //1000 //4000 
+#define c_ee (395) //(400) //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie (395) //(400) //8000 //400 //1000 //4000 
 #define c_ei (100) //(100) //2000 //100 //250 //1000 
 #define c_ii (100) //(100) //1999 //100 //250 //1000
+
+#define c_ss (5)
+#define c_es (5)
+#define c_se (395)
+#define c_is (5)
+#define c_si (100)
 
 //#define w_ie 0.2e-3 //(0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
 //#define w_ei 0.4e-3 //(0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
@@ -36,11 +42,21 @@
 //0.16492 1hz in-vitro
  //0.165171 //0.164871 //0.165171 //0.502946 //0.502964 /*0.185*/ /*0.176923 1hz net*/ //165 //0.35 //0.38 //0.5 //1.
 
+#define w_es
+#define w_se
+#define w_ss
+
+#define w_is w_ie
+#define w_si w_ei
+
 #define RHO_FIXED RHO_INIT //0.502964
 
 #define J_EXT (0.011046) /*(0.0108731)*/ /*(0.0108731)*/ /*(0.006966)*/ /*(0.00707)*/ /*(0.00695)*/ /*(0.006944)*/ /*(0.0113628)*/ /*(0.00695)*/ /*(0.00686) in-vivo*/ /*(0.0072) 1hz network*/ /*(0.0066)*/
+#define J_STIM (0.011046)
+
 #define NU_E_INIT (10.2) /*(1.25)*/
 #define NU_I_INIT (10.2) /*(1.25)*/
+#define NU_S_INIT (10.2)
 
 /*double c_pre = 0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
@@ -54,6 +70,9 @@ double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
 #define theta 0.02 //0.016 //0.02 //0.016 //0.02 /* threshold potential */
 #define v_r 0.01 //0.002 //0.01 //0.02 //0.01 //0. /* reset potential */
 #define sigma_ext 5.e-3 //0.5e-3 //5.e-3 //0.5e-3 /* noise */
+
+#define tau_s 0.02 /* s-population time constant (seconds)*/
+#define tau_ms 0.02 /* s-population membrane time constant (seconds)*/
 
 #define tmax 3.0 //30. //0.1 //3.1002 //10. /* seconds */
 #define dt 0.0001
