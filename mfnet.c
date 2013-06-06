@@ -42,9 +42,14 @@
 //0.16492 1hz in-vitro
  //0.165171 //0.164871 //0.165171 //0.502946 //0.502964 /*0.185*/ /*0.176923 1hz net*/ //165 //0.35 //0.38 //0.5 //1.
 
-#define w_es
+/*#define w_es
 #define w_se
-#define w_ss
+#define w_ss*/
+
+// RHO values rescale w_len to define weights
+#define RHO_SS RHO_INIT //(0.6)
+#define RHO_ES RHO_INIT //(0.4)
+#define RHO_SE RHO_INIT //(0.4)
 
 #define w_is w_ie
 #define w_si w_ei
@@ -88,25 +93,36 @@ FILE *fopen(),*output_file;
 
 
 int main(void) {
-	double mu_e, mu_i;
+	double mu_e, mu_i, mu_s;
 
 	double *nu_e = malloc((NintT+1) * sizeof(double));
 	double *nu_i = malloc((NintT+1) * sizeof(double));
+	double *nu_s = malloc((NintT+1) * sizeof(double));
 	double *w_ee = malloc((NintT+1) * sizeof(double));
+	double *w_es = malloc((NintT+1) * sizeof(double));
+	double *w_se = malloc((NintT+1) * sizeof(double));
+	double *w_ss = malloc((NintT+1) * sizeof(double));
 	double *rho = malloc((wNintT+1) * sizeof(double));
 	
 	int it, jt;
 	int mt, nt;
 	
 	rho[0] = RHO_INIT;
+	
 	//TODO: reenable weight update
 	//w_ee[0] = w_min + (w_len * rho[0]); //0.1e-3; //0.1e-3; //0.2e-3; //0.7;
 	w_ee[0] = w_min + (w_len * RHO_FIXED);
+	w_es[0] = w_min + (w_len * RHO_ES);
+	w_se[0] = w_min + (w_len * RHO_SE);
+	w_ss[0] = w_min + (w_len * RHO_SS);
+	
 	nu_e[0] = NU_E_INIT; //5.25; /* excitatory population initial rate */
 	nu_i[0] = NU_I_INIT; //5.25; /* inhibitory population initial rate */
+	nu_s[0] = NU_S_INIT;
 	
 	mu_e = J_EXT; //0.02; //0.025; /* external input to excitatory population */
 	mu_i = J_EXT; //0.02; //0.025; /* external input to inhibitory population */
+	mu_s = J_STIM;
 	
 	if(! (output_file = fopen("output_MF.dat", "a")) ){
 		perror("output_MF.dat, error opening output file.");
@@ -116,35 +132,42 @@ int main(void) {
 	it=0; // Mean-field index variable
 	jt=0; // Synaptic efficacy index variable
 	
-	printf("Inputs: mu_e: %gV, mu_i: %gV. Equivalent to: nu_ext_e: %gHz, nu_ext_i: %gHz\n", mu_e, mu_i, (mu_e/(c_ee * w_ee[0] * tau_me)), (mu_i/(c_ie * w_ie * tau_me)));
+	printf("Inputs: mu_e: %gV, mu_i: %gV, mu_s: %gV. Equivalent to: nu_ext_e: %gHz, nu_ext_i: %gHz\n", mu_e, mu_i, mu_s, (mu_e/(c_ee * w_ee[0] * tau_me)), (mu_i/(c_ie * w_ie * tau_me)));
 	printf("time: 0.00, nu_e[0]: %f, nu_i[0]: %f, w_ee[0]: %g\n", nu_e[it], nu_i[it], w_ee[it]);
 	
-	fprintf(output_file, "%f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
+	fprintf(output_file, "%f %f %f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt], nu_s[it], w_ss[it]);
 	//for(it = 1; it < NintT; it++){
 	for(mt = 0; mt < wNintT; mt++){
-		double phi_mu_e, phi_mu_i;
+		double phi_mu_e, phi_mu_i, phi_mu_s;
 		double x_local, y_local;
-		double e_trans, i_trans;
-		double d_nu_e, d_nu_i;
+		double e_trans, i_trans, s_trans;
+		double d_nu_e, d_nu_i, d_nu_s;
 		double convergence = 1000.;
-		double sigma_e, sigma_i;
+		double sigma_e, sigma_i, sigma_s;
 		
 		for(nt = 1; (nt <= mfNintT); nt++){
 			// Update Mean-field equations, until next scheduled synapse update (or stop early upon convergence)
 			it = (mt * mfNintT) + nt;
 			
 			//TODO: add a third population to account for stimulated subpopulation
-			phi_mu_e = mu_e + (c_ee * w_ee[it-1] * tau_me * nu_e[it-1]) - (c_ei * w_ei * tau_me * nu_i[it-1]);
-			//phi_mu_e = phi_mu_e + (5. * (0.8 * w_len) * tau_me * 2);
-			phi_mu_i = mu_i + (c_ie * w_ie * tau_mi * nu_e[it-1]) - (c_ii * w_ii * tau_mi * nu_i[it-1]);
-			printf("pme: %f, pmi: %f, ", phi_mu_e, phi_mu_i);
+			//phi_mu_e = mu_e + (c_ee * w_ee[it-1] * tau_me * nu_e[it-1]) - (c_ei * w_ei * tau_me * nu_i[it-1]);
+			//phi_mu_i = mu_i + (c_ie * w_ie * tau_mi * nu_e[it-1]) - (c_ii * w_ii * tau_mi * nu_i[it-1]);
+			phi_mu_e = mu_e + (c_ee * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_es * w_es[it-1] * tau_me * nu_s[it-1]) - (c_ei * w_ei * tau_me * nu_i[it-1]);
+			phi_mu_i = mu_i + (c_ie * w_ie * tau_mi * nu_e[it-1]) + (c_is * w_is * tau_mi * nu_s[it-1]) - (c_ii * w_ii * tau_mi * nu_i[it-1]);
+			phi_mu_s = mu_s + (c_se * w_se[it-1] * tau_ms * nu_e[it-1]) + (c_ss * w_ss[it-1] * tau_ms * nu_s[it-1]) - (c_si * w_si * tau_ms * nu_i[it-1]);
+			printf("pme: %f, pmi: %f, pms: %f ", phi_mu_e, phi_mu_i, phi_mu_s);
 			
-			sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
-			sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
+			//sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
+			//sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
+			sigma_e = sigma_ext + (c_ee * w_ee[it-1] * w_ee[it-1] * tau_me * nu_e[it-1]) + (c_es * w_es[it-1] * tau_me * nu_s[it-1]) + (c_ei * w_ei * w_ei * tau_me * nu_i[it-1]);
+			sigma_i = sigma_ext + (c_ie * w_ie * w_ie * tau_mi * nu_e[it-1]) + (c_is * w_is * tau_mi * nu_s[it-1]) + (c_ii * w_ii * w_ii * tau_mi * nu_i[it-1]);
+			sigma_s = sigma_ext + (c_se * w_se[it-1] * tau_ms * nu_e[it-1]) + (c_ss * w_ss[it-1] * tau_ms * nu_s[it-1]) - (c_si * w_si * tau_ms * nu_i[it-1]);
+			
 			//TODO: enable only external sigma values here
 			//sigma_e = sigma_ext;
 			//sigma_i = sigma_ext;
-			printf("sig_e: %f, sig_i: %f, ", sigma_e, sigma_i);
+			//sigma_s = sigma_ext;
+			printf("sig_e: %f, sig_i: %f, sig_s: %f ", sigma_e, sigma_i, sigma_s);
 			
 			x_local = (theta - phi_mu_e)/sigma_e;
 			y_local = (v_r - phi_mu_e)/sigma_e;
@@ -157,7 +180,7 @@ int main(void) {
 			printf("x: %.2f, y: %.2f, trans: %.6f, de: %.2f, ", x_local, y_local, e_trans, d_nu_e);
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, e_trans);
 		
-			x_local = (theta - phi_mu_i)/sigma_e;
+			x_local = (theta - phi_mu_i)/sigma_e; //shouldn't this be sigma_i??
 			y_local = (v_r - phi_mu_i)/sigma_e;
 			i_trans = trans(x_local, y_local, tau_mi);
 			d_nu_i = (-nu_i[it-1] + i_trans) / tau_i;
@@ -168,11 +191,25 @@ int main(void) {
 			printf("x: %.2f, y: %.2f, trans: %.6f, di: %.2f, ", x_local, y_local, i_trans, d_nu_i);
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, i_trans);
 			
+			x_local = (theta - phi_mu_s)/sigma_s;
+			y_local = (v_r - phi_mu_s)/sigma_s;
+			s_trans = trans(x_local, y_local, tau_ms);
+			d_nu_s = (-nu_s[it-1] + s_trans) / tau_s;
+			// Original update function (stable)
+			nu_s[it] = nu_s[it-1] + (dt * d_nu_s);
+			// TODO: Quick and dirty jump to transfer function value
+			//nu_s[it] = s_trans;
+			printf("x: %.2f, y: %.2f, trans: %.6f, di: %.2f, ", x_local, y_local, s_trans, d_nu_s);
+			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, i_trans);
+			
 			if(nt < mfNintT){ // On last pass through loop only update MF equations, don't update weight or output to file
 				w_ee[it] = w_ee[it-1];
+				w_es[it] = w_es[it-1];
+				w_se[it] = w_se[it-1];
+				w_ss[it] = w_ss[it-1];
 				
-				printf("time: %g, nu_e[%d]: %.6f, nu_i[%d]: %.6f, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, w_ee[it]);
-				fprintf(output_file, "%f %f %f %g %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
+				printf("time: %g, nu_e[%d]: %.6f, nu_i[%d]: %.6f, nu_s[%d]: %.6f, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, nu_s[it], it, w_ee[it]);
+				fprintf(output_file, "%f %f %f %g %f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt], nu_s[it], w_es[it], w_se[it], w_ss[it]);
 				
 				// Debug these guys
 				//printf("d_nu_e: %0.8f, d_nu_i: %0.8f, ", d_nu_e, d_nu_i);
@@ -182,7 +219,11 @@ int main(void) {
 					printf("convergence at %f, it: %d\n", convergence, it);
 					nu_e[((mt+1)*mfNintT)] = nu_e[it];
 					nu_i[((mt+1)*mfNintT)] = nu_i[it];
+					nu_s[((mt+1)*mfNintT)] = nu_s[it];
 					w_ee[((mt+1)*mfNintT)-1] = w_ee[it-1];
+					w_es[((mt+1)*mfNintT)-1] = w_es[it-1];
+					w_se[((mt+1)*mfNintT)-1] = w_se[it-1];
+					w_ss[((mt+1)*mfNintT)-1] = w_ss[it-1];
 					it = ((mt+1)*mfNintT);
 					nt = mfNintT;
 				}
@@ -199,6 +240,9 @@ int main(void) {
 		//TODO: reenable weight updates
 		//w_ee[it] = w_min + (w_len * rho[jt]); // -1 due to extra increment on loop above
 		w_ee[it] = w_min + (w_len * RHO_FIXED);
+		w_es[it] = w_min + (w_len * RHO_ES);
+		w_se[it] = w_min + (w_len * RHO_SE);
+		w_ss[it] = w_min + (w_len * RHO_SS);
 		/*}
 		else{
 			w_ee[it] = w_ee[it-1];
@@ -207,8 +251,8 @@ int main(void) {
 			printf("BAZINGA!\n");
 		}
 		
-		printf("time: %g, nu_e[%d]: %g, nu_i[%d]: %g, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, w_ee[it]);
-		fprintf(output_file, "%f %f %f %g %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt]);
+		printf("time: %g, nu_e[%d]: %g, nu_i[%d]: %g, nu_s[%d]: %g, w_ee[%d]: %g\n", (it*dt), it, nu_e[it], it, nu_i[it], it, nu_s[it], it, w_ee[it]);
+		fprintf(output_file, "%f %f %f %g %f %f %f %f %f\n", (it*dt), nu_e[it], nu_i[it], w_ee[it], rho[jt], nu_s[it], w_es[it], w_se[it], w_ss[it]);
 	}
 	
 	fprintf(output_file, "\n\n\n\n\n");
