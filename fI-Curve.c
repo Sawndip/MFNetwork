@@ -21,10 +21,10 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee 0 //400 //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie 00 //8000 //400 //1000 //4000 
-#define c_ei 00 //2000 //100 //250 //1000 
-#define c_ii 00 //1999 //100 //250 //1000
+#define c_ee 400 //400 //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie 400 //8000 //400 //1000 //4000
+#define c_ei 100 //2000 //100 //250 //1000
+#define c_ii 100 //1999 //100 //250 //1000
 
 #define w_ie (0.1e-3) //(0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
 #define w_ei (0.4e-3) //(0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
@@ -72,13 +72,14 @@ int main(void) {
 	
 	
 	//TODO: begin loop over mu_tot with fixed synapses from here
-	if(! (output_file = fopen("simple_fI_MF.dat", "a")) ){
-		perror("fI_MF.dat, error opening output file.");
+	/*if(! (output_file = fopen("simple_fI_MF.dat", "a")) ){
+		perror("simple_fI_MF.dat, error opening output file.");
 		return 1;
 	}
 	
 	// Simple frequency as a function of total drive (\mu)
-	for(float mu_tot = 0; mu_tot < 51e-3; mu_tot += 0.5e-3){
+	//for(float mu_tot = 0; mu_tot < 31e-3; mu_tot += 0.3e-3){
+    for(float mu_tot = 0.005; mu_tot < 16e-3; mu_tot += 0.1e-3){
 		float x_local, y_local, e_trans;
 		float sigma_e, sigma_i;
 	 
@@ -93,13 +94,13 @@ int main(void) {
 		e_trans = trans(x_local, y_local, tau_me);
 		printf("x: %.2f, y: %.2f, trans: %.6f\n", x_local, y_local, e_trans);
 		fprintf(output_file, "%f %f\n", mu_tot, e_trans);
-	}
+	}*/
 	
 
 	
 	//TODO: loop over mu_ext and rho from here
-	/*if(! (output_file = fopen("multi_fI_MF.dat", "a")) ){
-		perror("fI_MF.dat, error opening output file.");
+	if(! (output_file = fopen("multi_fI_MF.dat", "a")) ){
+		perror("multi_fI_MF.dat, error opening output file.");
 		return 1;
 	}
 	
@@ -114,7 +115,8 @@ int main(void) {
 	
 	fprintf(output_file, "# mu_ext, e_trans, nu_e[NintT], nu_i[NintT], mu_tot_e, mu_tot_i\n");
 	// Frequency as a function of external drive, requires convergence. Try alternate rho values.
-	for (float mu_ext = 0; mu_ext <= 12e-3; mu_ext += 0.5e-3){
+	//for (float mu_ext = 0; mu_ext <= 14e-3; mu_ext += 0.5e-3){
+    for (float mu_ext = 15.315e-3; mu_ext <= 16e-3; mu_ext += 05.5e-3){
 		float mu_tot_e, mu_tot_i;
 		float x_local, y_local;
 		float e_trans, i_trans;
@@ -128,7 +130,7 @@ int main(void) {
 		sigma_i = sigma_ext;
 		
 		// Loop over rho values
-		for (float rho = 0; rho <= 1; rho+=0.1){
+		for (float rho = 0; rho <= 1; rho+=0.02){
 			w_ee = (rho * 0.2e-3);
 			
 			// Find nu_final for this mu_ext
@@ -180,13 +182,13 @@ int main(void) {
 		
 			fprintf(output_file, "%f %f %f %f %f %f %f %f %f %f\n", mu_ext, e_trans, nu_e[NintT], nu_i[NintT], w_ee, rho, mu_tot_e, mu_tot_i, sigma_e, sigma_i);
 		}
-	}*/
+	}
 	
 	
-	/*
+	
 	//TODO: begin loop over mu_ext with plastic synapses from here
-	if(! (output_file = fopen("plastic_fI_MF.dat", "a")) ){
-		perror("fI_MF.dat, error opening output file.");
+	/*if(! (output_file = fopen("plastic_fI_MF.dat", "a")) ){
+		perror("plastic_fI_MF.dat, error opening output file.");
 		return 1;
 	}
 	
@@ -314,8 +316,9 @@ int main(void) {
 		printf("%f %f %f %f %f %f %f %f %f %f\n", mu_ext, e_trans, nu_e[NintT], nu_i[NintT], w_ee[NintT], rho[wNintT], mu_tot_e, mu_tot_i, sigma_e, sigma_i);
 		fprintf(output_file, "%f %f %f %f %f %f %f %f %f %f\n", mu_ext, e_trans, nu_e[NintT], nu_i[NintT], w_ee[NintT], rho[wNintT], mu_tot_e, mu_tot_i, sigma_e, sigma_i);
 		
-	}
-	 */
+	}*/
+    
+    
 	
 	
 	//TODO: begin loop over nu with fixed synapses from here
@@ -323,8 +326,9 @@ int main(void) {
 	 perror("firing_fI_MF.dat, error opening output file.");
 	 return 1;
 	 }
-	 
-	double mu_ext = J_EXT;
+	*/
+    
+	/*double mu_ext = J_EXT;
 	double w_ee = RHO_FIXED * w_len;
 	*/
 	
@@ -395,11 +399,14 @@ int main(void) {
 		printf("%f %f %f %f\n", nu_e, e_trans, nu_i[NintT], convergence);
 		fprintf(output_file, "%f %f %f %f %f %f %f %f\n", nu_e, e_trans, nu_i[NintT], convergence, mu_tot_e, mu_tot_i, sigma_e, sigma_i);
 	}
+     */
 	
+    /*
 	printf("goodbye 1\n");
 	fprintf(output_file,"\n\n\n\n\n");
 	 
-	free(nu_i);*/
+	free(nu_i);
+     */
 	
 	/*
 	double *nu_e = malloc((NintT+1) * sizeof(double));

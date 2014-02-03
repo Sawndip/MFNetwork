@@ -4,17 +4,27 @@
 
 #include "shotnoise.h"
 
-#define EPSILLON 0.0000001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
-#define tauca 0.0226936 /*0.0227*/
-//#define cpre 0.56 /* moved to local variables to allow changing via function argument */
-//#define cpost 1.24
+// Sjoestroem parameters
+//#define tauca 0.0226936 /*0.0227*/
+//#define gammad 331.909
+//#define gammap 725.085
+//#define tau 346.3615 /* 346 */
+
 #define thetad 1
-#define thetap 1.3
-#define gammad 331.909
-#define gammap 725.085
+//#define thetap 1.3
+#define thetap 2
 //TODO: set sigma to 0 for coupled mean-field calculations
 #define sigma 3.35 /*3.35*/ /*0.*/ /*3.3501*/
-#define tau 346.3615 /* 346 */
+
+// New parameters for learning in a network
+#define tauca 0.020
+#define gammad 500 /*332*/
+#define gammap 20000 /*725*/
+#define tau 300 /* 346 */
+
+#define EPSILLON 0.0000001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
+//#define cpre 0.56 /* moved to local variables to allow changing via function argument */
+//#define cpost 1.24
 #define rhostar 0.5
 //#define D 0.0046 /* unused */
 #define fup 0.5
@@ -287,23 +297,17 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	free(P);
 }
     
-/*int main(void){
+int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
 	double rate = 0.944262;
 	
-	rate = 10;
-	rate = 9.0359;
-	rate = 0.94;
-	rate = 5;
-	rate = 2.96356;
-	rate = 0.964871;
-	rate = 0.978679;
-	rate = 1.0;
-	//rate = 0.9564;
+	//double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	//double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	
-	double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
-	double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	double c_pre = 0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	double c_post = 0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	
 	double alphas[2];
 	
 	double rhobar;
@@ -313,18 +317,18 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	FILE* fp;	
 	strcpy(filename, "correct_fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
-	fprintf(fp, "#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
+	fprintf(fp, "%%#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
-	for(double i = 1; i < 20.001; i+=100){
+	for(double i = 0; i < 2.01; i+=.1){
 	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
 		
 		rate = (float) i;
-		rate = 1.0;
-		//rate = pow(10, i);
+		//rate = 0.99648;
+		rate = pow(10, i);
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
@@ -346,5 +350,5 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	printf("cmax: %lf, dc: %lf, Nintc: %lf\n", cmax, dc, (float)Nintc);
 	
 	return 0;
-}*/
+}
 

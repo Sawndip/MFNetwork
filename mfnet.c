@@ -12,16 +12,16 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee (395) //(400) //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie (395) //(400) //8000 //400 //1000 //4000 
-#define c_ei (100) //(100) //2000 //100 //250 //1000 
-#define c_ii (100) //(100) //1999 //100 //250 //1000
+#define c_ee (0)//(399.95) //(400) //(395) //(400) //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie (0)// (400) //(395) //(400) //8000 //400 //1000 //4000
+#define c_ei (0)// (100) //(100) //(100) //(100) //2000 //100 //250 //1000 
+#define c_ii (0)// (99.95) //(100) //(100) //(100) //1999 //100 //250 //1000
 
-#define c_ss (5)
-#define c_es (5)
-#define c_se (395)
-#define c_is (5)
-#define c_si (100)
+#define c_ss (0) //(5)
+#define c_es (0) //(5)
+#define c_se (0) //(395)
+#define c_is (0) //(5)
+#define c_si (0) //(100)
 
 //#define w_ie 0.2e-3 //(0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
 //#define w_ei 0.4e-3 //(0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
@@ -34,7 +34,7 @@
 #define w_ii (0.4e-3) //(0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
 #define w_min 0.0
 #define w_len (0.2e-3) //(0.2e-3 * 0.05) //0.2e-3 //1.0e-3
-#define RHO_INIT 0.164844 //0.019 //0.164855 //0.019 //0.203584 //0.26172
+#define RHO_INIT 0.29281 //0.203584 //0.019 //0.164844 //0.019 //0.164855 //0.019 //0.203584 //0.26172
 //0.232253
 //(0.371888) 4hz in-vitro
 //(0.231090) 2hz in-vitro
@@ -47,17 +47,17 @@
 #define w_ss*/
 
 // RHO values rescale w_len to define weights
-#define RHO_SS RHO_INIT //(0.6)
-#define RHO_ES RHO_INIT //(0.4)
-#define RHO_SE RHO_INIT //(0.4)
+#define RHO_SS (0.9) // RHO_INIT //(0.65) //RHO_INIT //(0.6)// RHO_INIT //(0.6)
+#define RHO_ES (0.9) //RHO_INIT //(0.018) //RHO_INIT //(0.4) //RHO_INIT //(0.4)
+#define RHO_SE RHO_INIT //(0.675) //RHO_INIT //(0.4) //RHO_INIT //(0.4)
 
 #define w_is w_ie
 #define w_si w_ei
 
 #define RHO_FIXED RHO_INIT //0.502964
 
-#define J_EXT (0.011046) /*(0.0108731)*/ /*(0.0108731)*/ /*(0.006966)*/ /*(0.00707)*/ /*(0.00695)*/ /*(0.006944)*/ /*(0.0113628)*/ /*(0.00695)*/ /*(0.00686) in-vivo*/ /*(0.0072) 1hz network*/ /*(0.0066)*/
-#define J_STIM (0.02455)
+#define J_EXT (0.0191) //(0.015315) //(0.01145) /*(0.011046)*/ /*(0.0108731)*/ /*(0.0108731)*/ /*(0.006966)*/ /*(0.00707)*/ /*(0.00695)*/ /*(0.006944)*/ /*(0.0113628)*/ /*(0.00695)*/ /*(0.00686) in-vivo*/ /*(0.0072) 1hz network*/ /*(0.0066)*/
+#define J_STIM J_EXT //(0.01145) //(0.0348) //(0.01145) /*(0.01145)*/ /*(0.0348)*/ /*(0.02455)*/
 
 #define NU_E_INIT (10.2) /*(1.25)*/
 #define NU_I_INIT (10.2) /*(1.25)*/
@@ -65,8 +65,8 @@
 
 /*double c_pre = 0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
-#define cpre 0.56175 //0.33705 //0.56175
-#define cpost 1.23964 //0.74378 //1.23964
+#define cpre 0.33705 //0.33705 //0.56175
+#define cpost 0.74378 //0.74378 //1.23964
 
 #define tau_e 0.02 //0.01 /* excitatory population time constant (seconds) */
 #define tau_i 0.02 //0.01 /* inhibitory population time constant (seconds) */
@@ -79,14 +79,14 @@ double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
 #define tau_s 0.02 /* s-population time constant (seconds)*/
 #define tau_ms 0.02 /* s-population membrane time constant (seconds)*/
 
-#define tmax 13.0 //30. //0.1 //3.1002 //10. /* seconds */
+#define tmax 10.0 //30. //0.1 //3.1002 //10. /* seconds */
 #define dt 0.0001
 #define dwt 0.100
 #define NintT ((int)(tmax/dt))
 #define wNintT ((int)(tmax/dwt))
 #define mfNintT ((int)(dwt/dt))
 #define CONVERGENCE_CRITERION (0.00000001)
-/* tau_rp defined in newcv.c */
+/* taurp (refrac period) defined in newcv.c */
 
 
 FILE *fopen(),*output_file;
@@ -181,8 +181,8 @@ int main(void) {
 			//printf("x: %.2f, y: %.2f, trans: %.2f, ", x_local, y_local, e_trans);
 			
 			// I-population
-			x_local = (theta - phi_mu_i)/sigma_e; //shouldn't this be sigma_i??
-			y_local = (v_r - phi_mu_i)/sigma_e;
+			x_local = (theta - phi_mu_i)/sigma_i; //shouldn't this be sigma_i?? was sigma_e. Yes
+			y_local = (v_r - phi_mu_i)/sigma_i; //shouldn't this be sigma_i?? was sigma_e
 			i_trans = trans(x_local, y_local, tau_mi);
 			d_nu_i = (-nu_i[it-1] + i_trans) / tau_i;
 			// Original update function (stable)
