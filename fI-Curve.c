@@ -21,10 +21,10 @@
  #define JII 0.8
  #define sigma 5. 
  */
-#define c_ee 400 //400 //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
-#define c_ie 400 //8000 //400 //1000 //4000
-#define c_ei 100 //2000 //100 //250 //1000
-#define c_ii 100 //1999 //100 //250 //1000
+#define c_ee (0) //400 //400 //7999 //400 //1000 //4000 /* connectivity: each neuron receives X incoming connections */
+#define c_ie (0) //400 //8000 //400 //1000 //4000
+#define c_ei (0) //100 //2000 //100 //250 //1000
+#define c_ii (0) //100 //1999 //100 //250 //1000
 
 #define w_ie (0.1e-3) //(0.2e-3 * 0.05) //0.2e-3 //0.1e-3 //0.2e-3 /* weights */
 #define w_ei (0.4e-3) //(0.4e-3 * 0.05) //0.4e-3 //0.6e-3  
@@ -72,7 +72,7 @@ int main(void) {
 	
 	
 	//TODO: begin loop over mu_tot with fixed synapses from here
-	/*if(! (output_file = fopen("simple_fI_MF.dat", "a")) ){
+	if(! (output_file = fopen("simple_fI_MF.dat", "a")) ){
 		perror("simple_fI_MF.dat, error opening output file.");
 		return 1;
 	}
@@ -94,12 +94,12 @@ int main(void) {
 		e_trans = trans(x_local, y_local, tau_me);
 		printf("x: %.2f, y: %.2f, trans: %.6f\n", x_local, y_local, e_trans);
 		fprintf(output_file, "%f %f\n", mu_tot, e_trans);
-	}*/
+	}
 	
 
 	
 	//TODO: loop over mu_ext and rho from here
-	if(! (output_file = fopen("multi_fI_MF.dat", "a")) ){
+	/*if(! (output_file = fopen("multi_fI_MF.dat", "a")) ){
 		perror("multi_fI_MF.dat, error opening output file.");
 		return 1;
 	}
@@ -182,7 +182,7 @@ int main(void) {
 		
 			fprintf(output_file, "%f %f %f %f %f %f %f %f %f %f\n", mu_ext, e_trans, nu_e[NintT], nu_i[NintT], w_ee, rho, mu_tot_e, mu_tot_i, sigma_e, sigma_i);
 		}
-	}
+	}*/
 	
 	
 	
