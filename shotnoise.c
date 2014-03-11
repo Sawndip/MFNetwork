@@ -4,6 +4,8 @@
 
 #include "shotnoise.h"
 
+#define COMPILE_STANDALONE_SHOTNOISE
+
 // Sjoestroem parameters
 //#define tauca 0.0226936 /*0.0227*/
 //#define gammad 331.909
@@ -59,6 +61,54 @@
 
 
 char filename[100];
+
+
+// Returns the erf() of a value (not super precice, but ok) [Abramowitz and Stegun page 299]
+double d_erf(double x)
+{  
+	int sign = 1;
+	if (x < 0){ // erf(-x) = -erf(x)
+		sign = -1;
+	}
+	double y = 1.0 / ( 1.0 + 0.3275911 * x);   
+	return sign * (1 - (((((
+					+ 1.061405429  * y
+					- 1.453152027) * y
+				   + 1.421413741) * y
+				  - 0.284496736) * y 
+				 + 0.254829592) * y) 
+	* exp (-x * x));      
+}
+
+// Returns the probability of x, given the distribution described by mu and sigma.
+double pdf(double x, double mu, double sigma_rnd)
+{
+	//Constants
+	static const double pi = 3.14159265;
+	if ((mu == 0) && (sigma_rnd == 1)){
+		return exp( - (x * x) / 2 ) / sqrt( 2 * pi);
+	}
+	else{
+		return exp( -1 * (x - mu) * (x - mu) / (2 * sigma_rnd * sigma_rnd)) / (sigma_rnd * sqrt(2 * pi));
+	}
+}
+
+// Returns the probability of [-inf,x] of a gaussian distribution
+double cdf(double x, double mu, double sigma_rnd)
+{
+	return 0.5 * (1 + d_erf((x - mu) / (sigma_rnd * sqrt(2.))));
+}
+
+// Returns mean of truncated Gaussian process, currently truncated at 0 and 1
+double truncate_OU(float rho_bar, float alpha_d, float alpha_p){
+	double GammaP = gammap * alpha_p;
+	double GammaD = gammad * alpha_d;
+	
+	double sigma_rho_sq = ( (sigma * sigma) * (alpha_d + alpha_p) ) / (2 * ( GammaD + GammaP));
+	double sigma_rho = sqrt(sigma_rho_sq);
+	return rho_bar + sigma_rho * ( ( pdf(-rho_bar/sigma_rho, 0, 1) - pdf((1-rho_bar)/sigma_rho, 0, 1) ) / ( cdf((1-rho_bar)/sigma_rho, 0, 1) - cdf(-rho_bar/sigma_rho, 0, 1) ) );
+}
+
 
 // Hypergeometric function
 //double HyperFunc21(float a, float b, float c, float z){
@@ -141,6 +191,7 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	double intP,alphad,alphap,r, Qpre, Qpost;//pcmcpre,pcmcpost
 	double Gammap,Gammad,c;
 	double rhobar,sigmap,taueff,UP,DOWN,synchange;
+	double rhobar_trunc;
 	int ic;
 
 	//double P[Nintc]
@@ -266,10 +317,11 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 		rhobar = Gammap / (Gammad + Gammap);
 		sigmap = sigma * sqrt( (alphap + alphad) / (Gammap + Gammad) );
 		taueff = tau / (Gammap + Gammad);
+		rhobar_trunc = truncate_OU(rhobar, alphad, alphap);
 		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
-		printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
+		printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf, rhobar_trunc:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange, rhobar_trunc);
     }
 	//}
 	if (alphad < 0){ //This case should no longer occur! (when modification for P(I)<0 is enabled above)
@@ -296,7 +348,8 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	
 	free(P);
 }
-    
+ 
+#ifdef COMPILE_STANDALONE_SHOTNOISE
 int main(void){
 	//float rho = 0.5;
 	//float stepsize = 0.01;
@@ -311,6 +364,7 @@ int main(void){
 	double alphas[2];
 	
 	double rhobar;
+	double rhobar_trunc;
 	
 	double synchange, sigmap, taueff, UP, DOWN;
 	
@@ -321,7 +375,7 @@ int main(void){
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
-	for(double i = 0; i < 2.01; i+=.1){
+	for(double i = 0; i < 2.01; i+=100.1){
 	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
@@ -336,13 +390,14 @@ int main(void){
 		//New stuff
 		sigmap = sigma * sqrt( (alphas[1] + alphas[0]) / ((gammap * alphas[1]) + (gammad * alphas[0])) );
 		taueff = tau / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		rhobar_trunc = truncate_OU(rhobar, alphas[0], alphas[1]);
 		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
 		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
 		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
 		//printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
 		//end new stuff
 		printf("i: %f, rate: %lf, alphas[0]: %lf, alphas[1]: %lf\n\n", i, rate, alphas[0], alphas[1]);
-		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f %f\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)), synchange);
+		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f %f, %lf\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)), synchange, rhobar_trunc);
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
@@ -351,4 +406,4 @@ int main(void){
 	
 	return 0;
 }
-
+#endif /* COMPILE_STANDALONE_SHOTNOISE */
