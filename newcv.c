@@ -17,7 +17,7 @@
 
 /***** Time constants ****/
 //#define taui 20.e-3       /*** membrane time constant in seconds ***/ /* now passed in as parameter */
-#define taurp 0. //20.e-3 //2.e-3 //5.e-3       /*** absolute refractory period in seconds ***/
+//#define taurp 0. //20.e-3 //2.e-3 //5.e-3       /*** absolute refractory period in seconds ***/
 
 float nerf(float z)           /* function exp(z^2)(erf(z)+1)  */
 {
@@ -34,7 +34,7 @@ float nerf(float z)           /* function exp(z^2)(erf(z)+1)  */
 }
 
 
-double trans(double x,double y,double taui)     /* transduction function 
+double trans(double x,double y,double taui,double taurp)     /* transduction function 
 x=(threshold-mu)/sigma, y=(reset-mu)/sigma */ 
 {       
   double w,z,cont,ylow;
@@ -88,7 +88,7 @@ double function(double x) /* called from within cv() */
   return(w);
 }
 
-double cv(double x,double y,double taui)     /* coefficient of variation  
+double cv(double x,double y,double taui,double taurp)     /* coefficient of variation  
 x=(threshold-mu)/sigma, y=(reset-mu)/sigma */ 
 {       
   double w,z,cont,ylow;
@@ -124,7 +124,7 @@ x=(threshold-mu)/sigma, y=(reset-mu)/sigma */
     }
     w*=(x-ylow)*TWOPI/(double)(N);
   }
-  w*=pow(trans(x,y,taui)*taui,2.);
+  w*=pow(trans(x,y,taui,taurp)*taui,2.);
   return(sqrt(w));
 }
 

@@ -12,11 +12,11 @@
 
 float nerf(float z); /* function exp(z^2)(erf(z)+1)  */
 
-double trans(double x,double y,double taui);     /* transduction function 
+double trans(double x,double y,double taui, double taurp);     /* transduction function 
 									 x=(threshold-mu)/sigma, y=(reset-mu)/sigma */ 
 
 //double function(double x);  /* called from within cv() */
-double cv(double x,double y,double taui);     /* coefficient of variation  
+double cv(double x,double y,double taui, double taurp);     /* coefficient of variation  
 								  x=(threshold-mu)/sigma, y=(reset-mu)/sigma */ 
 
 #endif /* NEWCV_H */
