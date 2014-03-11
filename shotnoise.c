@@ -194,6 +194,9 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	double rhobar_trunc;
 	int ic;
 
+	// variables for exclusive LTP/LTD process
+	double alphad_exc, Gammad_exc, rhobar_exc, rhobar_exc_trunc;
+	
 	//double P[Nintc]
 	double *P = calloc(Nintc, sizeof(double));
 	
@@ -296,6 +299,8 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 		printf("intP: %lf, ", intP);
 		alphad /= intP;
 		alphap /= intP;
+		
+		alphad_exc = alphad - alphap;
 		//interP /= intP;
 		//printf("alphap: %f, alphad: %f, interP: %f\n", alphap, alphad, interP);
 	}
@@ -303,6 +308,8 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	// Gamma values are alpha values weighted by learning rates
     Gammad = gammad * alphad;
     Gammap = gammap * alphap;
+		
+	Gammad_exc = gammad * alphad_exc;
 	/*for(ic=1;ic<Nintc;ic++) {
       c=ic*dc;
       printf("%f %f\n",c,P[ic]/intP);
@@ -315,13 +322,18 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	}
 	else{
 		rhobar = Gammap / (Gammad + Gammap);
+		rhobar_exc = Gammap / (Gammad_exc + Gammap);
+
+		rhobar_trunc = truncate_OU(rhobar, alphad, alphap);
+		rhobar_exc_trunc = truncate_OU(rhobar_exc, alphad, alphap);
+		
 		sigmap = sigma * sqrt( (alphap + alphad) / (Gammap + Gammad) );
 		taueff = tau / (Gammap + Gammad);
-		rhobar_trunc = truncate_OU(rhobar, alphad, alphap);
+		
 		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(r*taueff)))/(sigmap*sqrt(1.-exp(-150./(r*taueff))))));
 		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
-		printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf, rhobar_trunc:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange, rhobar_trunc);
+		printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf, rhobar_trunc:%lf rhobar_exc:%lf, rhobar_exc_trunc:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange, rhobar_trunc, rhobar_exc, rhobar_exc_trunc);
     }
 	//}
 	if (alphad < 0){ //This case should no longer occur! (when modification for P(I)<0 is enabled above)
@@ -371,7 +383,7 @@ int main(void){
 	FILE* fp;	
 	strcpy(filename, "correct_fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
-	fprintf(fp, "%%#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD)\n");
+	fprintf(fp, "%%#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD) rhobar_trunc\n");
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
