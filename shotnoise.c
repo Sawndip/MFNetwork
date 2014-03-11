@@ -5,6 +5,7 @@
 #include "shotnoise.h"
 
 #define COMPILE_STANDALONE_SHOTNOISE
+//#define USE_EXCLUSIVE_LTP_LTD
 
 // Sjoestroem parameters
 //#define tauca 0.0226936 /*0.0227*/
@@ -168,20 +169,39 @@ double Pfirst(double c, double r) {
 }*/
 
 double updateWeight(double rho_old, double stepsize, double rate, double c_pre, double c_post){
-	double rho_new, d_rho, alphas[2];
+	double rho_new, d_rho, alphas[3];
 	d_rho = 0.;
+	double tau_eff;// = tau;
 	
 	getAlphas(rate, c_pre, c_post, alphas);
 	
-	d_rho = ((gammap * alphas[1]) - rho_old * (gammap * alphas[1] + gammad * alphas[0])) / tau;
-	// Original, converges too slowly but is very stable
-	//rho_new = rho_old + (stepsize * d_rho);
-	// Magnified step size
-	//rho_new = rho_old + (1000 * stepsize * d_rho);
-	// TODO: Instantaneous jump to rho_bar
-	rho_new = (gammap * alphas[1]) / (gammap * alphas[1] + gammad * alphas[0]);
+	#ifndef USE_EXCLUSIVE_LTP_LTD
+		tau_eff = tau / (gammap * alphas[1] + gammad * alphas[0]);
+		d_rho = ((gammap * alphas[1]) - rho_old * (gammap * alphas[1] + gammad * alphas[0])) / tau_eff;
+		
+		//TODO: choose which form of weight convergence to use here
+		// Original, converges too slowly but is very stable
+		//rho_new = rho_old + (stepsize * d_rho);
+		// Magnified step size
+		//rho_new = rho_old + (1000 * stepsize * d_rho);
+		// Instantaneous jump to rho_bar
+		rho_new = (gammap * alphas[1]) / (gammap * alphas[1] + gammad * alphas[0]);
+	#else // LTP and LTD are mutually exclusive processes below
+		tau_eff = tau / (gammap * alphas[1] + gammad * alphas[2]);
+		d_rho = ((gammap * alphas[1]) - rho_old * (gammap * alphas[1] + gammad * alphas[2])) / tau_eff;
+		
+		//TODO: choose which form of weight convergence to use here
+		// Original, converges too slowly but is very stable
+		//rho_new = rho_old + (stepsize * d_rho);
+		// Magnified step size
+		//rho_new = rho_old + (1000 * stepsize * d_rho);
+		// Instantaneous jump to rho_bar
+		rho_new = (gammap * alphas[1]) / (gammap * alphas[1] + gammad * alphas[2]);
+	#endif /* USE_EXCLUSIVE_LTP_LTD */
+	
+	
 	printf("rho_old: %g, d_rho: %g, rho_new: %g\n", rho_old, d_rho, rho_new);
-	printf("alphad: %g, alphap: %g\n", alphas[0], alphas[1]);
+	printf("alphad: %g, alphap: %g, alphad_exc: %g\n", alphas[0], alphas[1], alphas[2]);
 	return rho_new;
 }
 
@@ -346,6 +366,7 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 	}
 	alphas[0] = alphad;
 	alphas[1] = alphap;
+	alphas[2] = alphad_exc;
 	//printf("P[%d]: %f, alphas[0]: %f, alphas[1]: %f, interP: %f\n", (ic-1), P[ic-1], alphas[0], alphas[1], interP);
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
@@ -395,6 +416,7 @@ int main(void){
 		rate = (float) i;
 		//rate = 0.99648;
 		rate = pow(10, i);
+		rate = 22;
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
