@@ -345,7 +345,7 @@ void getAlphas(double rate, double c_pre, double c_post, double *alphas){
 		rhobar_exc = Gammap / (Gammad_exc + Gammap);
 
 		rhobar_trunc = truncate_OU(rhobar, alphad, alphap);
-		rhobar_exc_trunc = truncate_OU(rhobar_exc, alphad, alphap);
+		rhobar_exc_trunc = truncate_OU(rhobar_exc, alphad_exc, alphap);
 		
 		sigmap = sigma * sqrt( (alphap + alphad) / (Gammap + Gammad) );
 		taueff = tau / (Gammap + Gammad);
@@ -408,7 +408,7 @@ int main(void){
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
-	for(double i = 0; i < 2.01; i+=100.1){
+	for(double i = 0; i < 2.01; i+=0.1){
 	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
@@ -416,7 +416,6 @@ int main(void){
 		rate = (float) i;
 		//rate = 0.99648;
 		rate = pow(10, i);
-		rate = 22;
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
