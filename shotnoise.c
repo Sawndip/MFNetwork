@@ -15,14 +15,14 @@
 
 #define thetad 1
 //#define thetap 1.3
-#define thetap 2
+#define thetap 1.55
 //TODO: set sigma to 0 for coupled mean-field calculations
 #define sigma 3.35 /*3.35*/ /*0.*/ /*3.3501*/
 
 // New parameters for learning in a network
 #define tauca 0.020
-#define gammad 500 /*332*/
-#define gammap 20000 /*725*/
+#define gammad 2000 /*500*/ /*332*/
+#define gammap 2000 /*725*/
 #define tau 300 /* 346 */
 
 #define EPSILLON 0.0000001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
@@ -424,8 +424,8 @@ int main(void){
 	//double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 	//double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	
-	double c_pre = 0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
-	double c_post = 0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	double c_pre = 0.9;//51; //0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	double c_post = 0.9;//0.51; //0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	
 	double alphas[3];
 	
@@ -438,7 +438,7 @@ int main(void){
 	FILE* fp;	
 	strcpy(filename, "correct_fine_rate_dep_alphas.dat");
 	fp = fopen(filename, "a");
-	fprintf(fp, "%%#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD) rhobar_trunc\n");
+	fprintf(fp, "%%#rate alpha_d alpha_p (alpha_d - alpha_p) rhobar GammaD GammaP abs(GammaP-GammaD) synchange rhobar_trunc rhobar_exc rhobar_exc_trunc\n");
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
