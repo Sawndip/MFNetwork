@@ -71,7 +71,14 @@ double d_erf(double x)
 	if (x < 0){ // erf(-x) = -erf(x)
 		sign = -1;
 	}
-	double y = 1.0 / ( 1.0 + 0.3275911 * x);   
+	double y = 1.0 / ( 1.0 + 0.3275911 * x);
+    double local = sign * (1 - (((((
+                                    + 1.061405429  * y
+                                    - 1.453152027) * y
+                                   + 1.421413741) * y
+                                  - 0.284496736) * y 
+                                 + 0.254829592) * y) 
+                           * exp (-x * x));
 	return sign * (1 - (((((
 					+ 1.061405429  * y
 					- 1.453152027) * y
@@ -87,6 +94,7 @@ double pdf(double x, double mu, double sigma_rnd)
 	//Constants
 	static const double pi = 3.14159265;
 	if ((mu == 0) && (sigma_rnd == 1)){
+        double local = exp( - (x * x) / 2 ) / sqrt( 2 * pi);
 		return exp( - (x * x) / 2 ) / sqrt( 2 * pi);
 	}
 	else{
@@ -97,7 +105,31 @@ double pdf(double x, double mu, double sigma_rnd)
 // Returns the probability of [-inf,x] of a gaussian distribution
 double cdf(double x, double mu, double sigma_rnd)
 {
+    double local = 0.5 * (1 + d_erf( (x - mu) / (sigma_rnd * sqrt(2.)) ) );
 	return 0.5 * (1 + d_erf((x - mu) / (sigma_rnd * sqrt(2.))));
+}
+
+// alternative cumulative normal distribution (the other one was not working at 25Hz)
+static double CND(double d)
+{
+    const double       A1 = 0.31938153;
+    const double       A2 = -0.356563782;
+    const double       A3 = 1.781477937;
+    const double       A4 = -1.821255978;
+    const double       A5 = 1.330274429;
+    const double RSQRT2PI = 0.39894228040143267793994605993438;
+    
+    double
+    K = 1.0 / (1.0 + 0.2316419 * fabs(d));
+    
+    double
+    cnd = RSQRT2PI * exp(- 0.5 * d * d) *
+    (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
+    
+    if (d > 0)
+        cnd = 1.0 - cnd;
+    
+    return cnd;
 }
 
 // Returns mean of truncated Gaussian process, currently truncated at 0 and 1
@@ -107,7 +139,8 @@ double truncate_OU(float rho_bar, float alpha_d, float alpha_p){
 	
 	double sigma_rho_sq = ( (sigma * sigma) * (alpha_d + alpha_p) ) / (2 * ( GammaD + GammaP));
 	double sigma_rho = sqrt(sigma_rho_sq);
-	return rho_bar + sigma_rho * ( ( pdf(-rho_bar/sigma_rho, 0, 1) - pdf((1-rho_bar)/sigma_rho, 0, 1) ) / ( cdf((1-rho_bar)/sigma_rho, 0, 1) - cdf(-rho_bar/sigma_rho, 0, 1) ) );
+	//return rho_bar + sigma_rho * ( ( pdf(-rho_bar/sigma_rho, 0, 1) - pdf((1-rho_bar)/sigma_rho, 0, 1) ) / ( cdf((1-rho_bar)/sigma_rho, 0, 1) - cdf(-rho_bar/sigma_rho, 0, 1) ) );
+    return rho_bar + sigma_rho * ( ( pdf(-rho_bar/sigma_rho, 0, 1) - pdf((1-rho_bar)/sigma_rho, 0, 1) ) / ( CND((1-rho_bar)/sigma_rho) - CND(-rho_bar/sigma_rho) ) );
 }
 
 
@@ -394,10 +427,11 @@ int main(void){
 	double c_pre = 0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 	double c_post = 0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	
-	double alphas[2];
+	double alphas[3];
 	
 	double rhobar;
 	double rhobar_trunc;
+	double taueff_exc, sigmap_exc, rhobar_exc, rhobar_exc_trunc;
 	
 	double synchange, sigmap, taueff, UP, DOWN;
 	
@@ -408,29 +442,44 @@ int main(void){
 	//for(float i = 0.1; i < 100; i+=1){
 	//for(float i = 1.0; i < 1.1; i+=1){
 	//for(double i = -4; i < 2.001; i+=0.005){
-	for(double i = 0; i < 2.01; i+=0.1){
+	//double loop_index;
+	//for(loop_index = 0; loop_index < 5; loop_index++){
+	for(double i = 0.0; i < 2.01; i+=0.1){
 	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
-		
-		rate = (float) i;
+		//double i = loop_index;
+		//printf("DEBUG loop_index %lf, i %lf\n", loop_index, i);
+		//rate = (float) i;
 		//rate = 0.99648;
 		rate = pow(10, i);
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
+        
 		printf("outfile: %s\n", filename);
 		getAlphas(rate, c_pre, c_post, alphas);
+		
+		
 		rhobar = (gammap * alphas[1]) / ((gammap * alphas[1]) + (gammad * alphas[0]));
-		//New stuff
-		sigmap = sigma * sqrt( (alphas[1] + alphas[0]) / ((gammap * alphas[1]) + (gammad * alphas[0])) );
-		taueff = tau / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		rhobar_exc = (gammap * alphas[1])  / ((gammad * alphas[2]) + (gammap * alphas[1]));
+
 		rhobar_trunc = truncate_OU(rhobar, alphas[0], alphas[1]);
+		rhobar_exc_trunc = truncate_OU(rhobar_exc, alphas[2], alphas[1]);
+		
+		sigmap = sigma * sqrt( (alphas[1] + alphas[0]) / ((gammap * alphas[1]) + (gammad * alphas[0])) );
+		sigmap_exc = sigma * sqrt( (alphas[1] + alphas[2]) / ((gammap * alphas[1]) + (gammad * alphas[2])) );
+		
+		taueff = tau / ((gammap * alphas[1]) + (gammad * alphas[0]));
+		taueff_exc = tau / ((gammap * alphas[1]) + (gammad * alphas[2]));
+		
+		
 		UP = 0.5*(1.-erf((rhostar-rhobar+rhobar*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
 		DOWN = 0.5*(1.+erf((rhostar-rhobar+(rhobar-1.)*exp(-75./(rate*taueff)))/(sigmap*sqrt(1.-exp(-150./(rate*taueff))))));
 		synchange = ( (fup * (1.-DOWN) + (1.-fup) * UP) * cmich + fup * DOWN + (1.-fup) * (1.-UP) ) / (fup * cmich + 1. - fup);
+		
 		//printf("rate: %lf, alphad: %lf, alphap: %lf, rhobar: %lf, UP:%lf,  DOWN:%lf, synchange:%lf\n",r, alphad, alphap, rhobar, UP, DOWN, synchange);
 		//end new stuff
-		printf("i: %f, rate: %lf, alphas[0]: %lf, alphas[1]: %lf\n\n", i, rate, alphas[0], alphas[1]);
-		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f %f, %lf\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)), synchange, rhobar_trunc);
+		printf("i: %lf, rate: %lf, alphas[0]: %lf, alphas[1]: %lf, alphas[2]: %lf\n\n", i, rate, alphas[0], alphas[1], alphas[2]);
+		fprintf(fp, "%lf %0.10lf %0.10lf %lf %lf, %0.8lf, %0.8lf, %f %f, %lf %lf %lf\n", rate, alphas[0], alphas[1], (alphas[0]-alphas[1]), rhobar, (alphas[0]*gammad), (alphas[1]*gammap), fabs((alphas[1]*gammap)-(alphas[0]*gammad)), synchange, rhobar_trunc, rhobar_exc, rhobar_exc_trunc);
 	}
 	fprintf(fp, "\n\n\n\n\n");
 	fclose(fp);
