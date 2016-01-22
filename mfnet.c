@@ -34,7 +34,7 @@
 #define w_ii (0.4e-3) //(0.8e-3 * 0.05) //0.8e-3 //0.6e-3 
 #define w_min 0.0
 #define w_len (0.2e-3) //(0.2e-3 * 0.05) //0.2e-3 //1.0e-3
-#define RHO_INIT (0.7) /*0.29281*/ //0.203584 //0.019 //0.164844 //0.019 //0.164855 //0.019 //0.203584 //0.26172
+#define RHO_INIT (0.4) /*0.29281*/ //0.203584 //0.019 //0.164844 //0.019 //0.164855 //0.019 //0.203584 //0.26172
 //0.232253
 //(0.371888) 4hz in-vitro
 //(0.231090) 2hz in-vitro
@@ -87,6 +87,7 @@ double c_post = 0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;*/
 #define mfNintT ((int)(dwt/dt))
 #define CONVERGENCE_CRITERION (0.00000001)
 /* taurp (refrac period) defined in newcv.c */
+#define taurp 0. //20.e-3 //2.e-3 //5.e-3       /*** absolute refractory period in seconds ***/
 
 
 FILE *fopen(),*output_file;
@@ -171,7 +172,7 @@ int main(void) {
 			// E-population
 			x_local = (theta - phi_mu_e)/sigma_e;
 			y_local = (v_r - phi_mu_e)/sigma_e;
-			e_trans = trans(x_local, y_local, tau_me);
+			e_trans = trans(x_local, y_local, tau_me, taurp);
 			d_nu_e = (-nu_e[it-1] + e_trans) / tau_e;
 			// Original update function (stable)
 			nu_e[it] = nu_e[it-1] + (dt * d_nu_e);
@@ -183,7 +184,7 @@ int main(void) {
 			// I-population
 			x_local = (theta - phi_mu_i)/sigma_i; //shouldn't this be sigma_i?? was sigma_e. Yes
 			y_local = (v_r - phi_mu_i)/sigma_i; //shouldn't this be sigma_i?? was sigma_e
-			i_trans = trans(x_local, y_local, tau_mi);
+			i_trans = trans(x_local, y_local, tau_mi, taurp);
 			d_nu_i = (-nu_i[it-1] + i_trans) / tau_i;
 			// Original update function (stable)
 			nu_i[it] = nu_i[it-1] + (dt * d_nu_i);
@@ -195,7 +196,7 @@ int main(void) {
 			// S-population
 			x_local = (theta - phi_mu_s)/sigma_s;
 			y_local = (v_r - phi_mu_s)/sigma_s;
-			s_trans = trans(x_local, y_local, tau_ms);
+			s_trans = trans(x_local, y_local, tau_ms, taurp);
 			d_nu_s = (-nu_s[it-1] + s_trans) / tau_s;
 			// Original update function (stable)
 			nu_s[it] = nu_s[it-1] + (dt * d_nu_s);

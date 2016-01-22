@@ -4,26 +4,28 @@
 
 #include "shotnoise.h"
 
-#define COMPILE_STANDALONE_SHOTNOISE
+//#define COMPILE_STANDALONE_SHOTNOISE
 //#define USE_EXCLUSIVE_LTP_LTD
 
-// Sjoestroem parameters
-//#define tauca 0.0226936 /*0.0227*/
-//#define gammad 331.909
-//#define gammap 725.085
-//#define tau 346.3615 /* 346 */
-
-#define thetad 1
-//#define thetap 1.3
-#define thetap 1.55
+//#define thetap 1.55
 //TODO: set sigma to 0 for coupled mean-field calculations
 #define sigma 3.35 /*3.35*/ /*0.*/ /*3.3501*/
 
 // New parameters for learning in a network
+/*
+#define thetad 1
+#define thetap 1.3
 #define tauca 0.020
-#define gammad 2000 /*500*/ /*332*/
-#define gammap 2000 /*725*/
-#define tau 300 /* 346 */
+#define gammad 2000
+#define gammap 2000
+#define tau 300*/
+// MG Sjoestroem parameters
+#define thetad 1
+#define thetap 1.3
+#define tauca 0.0226936
+#define gammad 331.909
+#define gammap 725.085
+#define tau 346.3615
 
 #define EPSILLON 0.0000001 /* variable added to floats to be cast as ints in order to avoid numerical problems */
 //#define cpre 0.56 /* moved to local variables to allow changing via function argument */
@@ -424,9 +426,14 @@ int main(void){
 	//double c_pre = 0.56175; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
 	//double c_post = 1.23964; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
 	
-	double c_pre = 0.9;//51; //0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
-	double c_post = 0.9;//0.51; //0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
-	
+	//double c_pre = 0.9;//51; //0.45; //1; //1.15; //0.56175; //0.33705;//0.337;//0.562;//0;//5; //0.33705; //0.5617539;
+	//double c_post = 0.9;//0.51; //0.45; //1; //1.15; //1.23964; //0.74378;//0.744; //1.24; //7;//8; //0.74378; //1.23964;
+	double c_pre = 0.56; //0.56175;
+    //double c_pre = 0.001;
+    double c_post = 0.00001; //0.001; //1.23964;
+
+    //double c_post = 0.001;
+    
 	double alphas[3];
 	
 	double rhobar;
@@ -444,7 +451,7 @@ int main(void){
 	//for(double i = -4; i < 2.001; i+=0.005){
 	//double loop_index;
 	//for(loop_index = 0; loop_index < 5; loop_index++){
-	for(double i = 0.0; i < 2.01; i+=0.1){
+	for(double i = 0.0; i < 2.01; i+=1000.1){
 	//for(double i = 1; i < 21; i++){
 		//rho = updateWeight(rho, stepsize, rate, c_pre, c_post);
 		//printf("i: %d, rho: %f\n", i, rho);
@@ -453,6 +460,7 @@ int main(void){
 		//rate = (float) i;
 		//rate = 0.99648;
 		rate = pow(10, i);
+        rate = 1;
 		//sprintf(filename, "shot_out_rate_%f.dat", rate);
         
 		printf("outfile: %s\n", filename);
